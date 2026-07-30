@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 0001 — 存储器层次结构：为什么需要那么多种存储器？</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  /* Memory hierarchy diagram */
+  .mem-hierarchy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 2rem 0;
+  }
+  .mem-tier {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.7rem 2rem;
+    border-radius: 8px;
+    min-width: 340px;
+    position: relative;
+  }
+  .mem-tier .name { font-weight: 700; font-size: 1.05em; }
+  .mem-tier .tech { font-size: 0.82em; color: var(--text-muted); margin-top: 0.15em; }
+  .mem-tier .stats { font-size: 0.8em; color: var(--sidenote); margin-top: 0.3em; }
+  .mem-down-arrow {
+    font-size: 1.6em;
+    color: var(--sidenote);
+    margin: 0.05rem 0;
+    line-height: 1;
+  }
+  .mem-down-arrow .label {
+    font-size: 0.5em;
+    display: block;
+    line-height: 1;
+    font-family: 'Inter', sans-serif;
+  }
+  .tier-l1 { background: #fef0ee; border: 1.5px solid var(--accent-dim); }
+  .tier-l2 { background: #fdf6f0; border: 1.5px solid #e8c8a0; }
+  .tier-l3 { background: #fafae0; border: 1.5px solid #d8d8a0; }
+  .tier-l4 { background: #eaf7f1; border: 1.5px solid #a0d8b8; }
+  .tier-l5 { background: #e8f0fe; border: 1.5px solid #a0c0e8; }
+
+  /* Comparison table */
+  .cmp-table td:first-child { font-weight: 600; white-space: nowrap; }
+  .cmp-table .win { color: #2d8a56; font-weight: 600; }
+  .cmp-table .lose { color: #c44d34; }
+
+  /* Spectrum bar */
+  .spectrum {
+    display: flex;
+    margin: 1rem 0;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.82em;
+    font-weight: 600;
+    height: 2.4rem;
+    line-height: 2.4rem;
+    text-align: center;
+  }
+  .spec-fast { background: #fef0ee; flex: 1; }        /* SRAM */
+  .spec-mid  { background: #fdf6f0; flex: 1.5; }      /* DRAM */
+  .spec-slow { background: #e8f0fe; flex: 3; }         /* NAND */
+  .spec-left  { border-radius: 6px 0 0 6px; }
+  .spec-right { border-radius: 0 6px 6px 0; }
+
+  /* Real system diagram */
+  .sys-diagram {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 0.85em;
+  }
+  .sys-block {
+    border: 2px solid var(--text);
+    border-radius: 6px;
+    padding: 0.5rem 0.8rem;
+    text-align: center;
+    font-weight: 600;
+    background: var(--bg);
+  }
+  .sys-block.cpu { border-color: var(--accent); }
+  .sys-block.cache { border-color: var(--accent-dim); font-size: 0.8em; }
+  .sys-block.dram { border-color: #d8d8a0; }
+  .sys-block.storage { border-color: #a0c0e8; }
+  .sys-arrow { font-size: 1.2em; color: var(--sidenote); }
+</style>
+</head>
+<body>
+
+<div class="lesson-nav">
+  <span class="prev" style="visibility:hidden">← 上一课</span>
+  <span class="lesson-meta">Lesson 0001 · 2026-07-31</span>
+  <a class="next" href="0002-memory-cell-basics.html">下一课 →</a>
+</div>
+
+<h1>存储器层次结构<br><span style="font-weight:400;font-size:0.7em;color:var(--sidenote)">为什么需要那么多种存储器？</span></h1>
+
+<div class="callout">
+  <div class="callout-title">🎯 本课目标</div>
+  <p style="margin:0.3rem 0">上完这课你能：画出存储器层次结构图，说出每种存储器在系统中的位置，并解释为什么不能用"一种最好的存储器"解决所有问题。</p>
+</div>
+
+<h2>一个看似简单的问题</h2>
+
+<p>假设你在设计一台手机或一块SSD板卡。你需要存储数据——从CPU马上要用的指令，到用户拍的照片。你可能会想：<strong>为什么不直接用最大容量的存储器来干所有事？</strong></p>
+
+<p>答案藏在两个冷酷的物理事实里：</p>
+
+<ol>
+  <li><strong>快的存储器一定小</strong>（物理距离 + 功耗限制）</li>
+  <li><strong>大的存储器一定慢</strong>（地址线驱动 + 传感裕度）</li>
+</ol>
+
+<p>这就是"<strong>存储墙</strong>"（Memory Wall）——CPU 速度增长远超内存速度增长，两者之间的鸿沟靠<strong>层次结构</strong>来弥合。</p>
+
+<h2>存储器层次结构</h2>
+
+<div class="mem-hierarchy">
+
+  <div class="mem-tier tier-l1">
+    <div class="name">L1 / L2 / L3 Cache</div>
+    <div class="tech">SRAM（静态随机存取存储器）</div>
+    <div class="stats">~32KB–32MB · 0.5–2 ns · 在 CPU 芯片上</div>
+  </div>
+
+  <div class="mem-down-arrow">
+    ↓
+    <span class="label">容量↑ 速度↓ 每bit成本↓</span>
+  </div>
+
+  <div class="mem-tier tier-l2">
+    <div class="name">主内存（Main Memory）</div>
+    <div class="tech">DRAM（动态随机存取存储器）— DDR4 / DDR5 / LPDDR</div>
+    <div class="stats">~4GB–128GB · 10–70 ns · CPU 旁的 DIMM 或焊在 PCB 上</div>
+  </div>
+
+  <div class="mem-down-arrow">↓</div>
+
+  <div class="mem-tier tier-l3">
+    <div class="name">NOR Flash（代码存储）</div>
+    <div class="tech">NOR Flash — 可随机读取，按字节寻址</div>
+    <div class="stats">~16MB–256MB · 70–100 ns 读取 · 嵌入式系统的"硬盘"</div>
+  </div>
+
+  <div class="mem-down-arrow">↓</div>
+
+  <div class="mem-tier tier-l4">
+    <div class="name">NAND Flash（数据存储）</div>
+    <div class="tech">NAND Flash — SLC / MLC / TLC / QLC</div>
+    <div class="stats">~16GB–2TB+ · 20–100 μs 读取 · SSD, U盘, SD卡</div>
+  </div>
+
+  <div class="mem-down-arrow">↓</div>
+
+  <div class="mem-tier tier-l5">
+    <div class="name">硬盘 / 归档</div>
+    <div class="tech">HDD / 磁带 / 光盘</div>
+    <div class="stats">~1TB–20TB · 毫秒级 · 冷数据</div>
+  </div>
+
+</div>
+
+<p style="text-align:center;font-size:0.85em;color:var(--sidenote);margin-top:0.5em;">图1：完整的存储器层次结构。从上到下，容量每级增长约 1000×，速度每级下降约 10–100×。</p>
+
+<h2>四种核心存储技术的本质区别</h2>
+
+<table class="cmp-table">
+  <thead>
+    <tr>
+      <th>属性</th>
+      <th>SRAM</th>
+      <th>DRAM</th>
+      <th>NAND Flash</th>
+      <th>NOR Flash</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>存储单元</td>
+      <td>6个晶体管（6T）</td>
+      <td>1个晶体管 + 1个电容（1T1C）</td>
+      <td>1个浮栅晶体管（1T）</td>
+      <td>1个浮栅晶体管（1T）</td>
+    </tr>
+    <tr>
+      <td>读取速度</td>
+      <td class="win">0.5–2 ns</td>
+      <td>10–70 ns</td>
+      <td>20–100 μs</td>
+      <td>70–100 ns</td>
+    </tr>
+    <tr>
+      <td>写入速度</td>
+      <td class="win">0.5–2 ns</td>
+      <td>10–70 ns</td>
+      <td class="lose">200–2000 μs</td>
+      <td class="lose">0.5–10 μs</td>
+    </tr>
+    <tr>
+      <td>每 bit 面积</td>
+      <td class="lose">~120 F²</td>
+      <td>~6 F²</td>
+      <td class="win">~4 F² (3D: 更小)</td>
+      <td>~10 F²</td>
+    </tr>
+    <tr>
+      <td>易失性</td>
+      <td>易失（断电丢失）</td>
+      <td>易失（断电丢失）</td>
+      <td class="win">非易失</td>
+      <td class="win">非易失</td>
+    </tr>
+    <tr>
+      <td>写入耐久</td>
+      <td class="win">无限</td>
+      <td class="win">无限</td>
+      <td class="lose">~10³–10⁵ 次</td>
+      <td class="lose">~10⁵ 次</td>
+    </tr>
+    <tr>
+      <td>典型用途</td>
+      <td>CPU Cache</td>
+      <td>主内存</td>
+      <td>SSD, U盘</td>
+      <td>固件, Boot ROM</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:0.82em;color:var(--sidenote);">* F² = 最小特征尺寸的平方。例如 20nm 工艺下，F² = 400 nm²（之后的课会详解）。</p>
+
+<h2>核心洞察：每 bit 成本才是"上帝之手"</h2>
+
+<p>这张表回答了几个关键问题：</p>
+
+<ol>
+  <li><strong>为什么不用 SRAM 做主存？</strong>太贵、太大、太耗电。每 bit 需要 6 个晶体管，容量做不大。</li>
+  <li><strong>为什么不用 DRAM 做存储？</strong>断电就丢数据（易失），而且无法做到 NAND 的密度（4F² vs 6F²）。</li>
+  <li><strong>为什么不用 NAND 做主存？</strong>太慢 — 读延迟是 DRAM 的 ~1000 倍，写延迟更离谱。而且只能写 ~10⁴ 次。</li>
+  <li><strong>为什么 NOR 和 NAND 同时存在？</strong>NOR 读取快且支持按字节随机读（可以<em>就地执行</em>代码），NAND 密度更高适合存大量数据。</li>
+</ol>
+
+<div class="callout">
+  <div class="callout-title">💡 系统集成视角的关键认知</div>
+  <p>在你今后的工作中，每当看到一个新的存储技术，问自己三个问题：</p>
+  <ol style="margin:0.4rem 0;">
+    <li>它落在层次结构的哪一层？（速度 / 容量 / 成本）</li>
+    <li>它是易失还是非易失的？</li>
+    <li>它的读写不对称性如何？（读快写慢？读慢写快？差不多？）</li>
+  </ol>
+  <p>这三个问题能帮你迅速定位任何存储技术的角色和适用范围。</p>
+</div>
+
+<h2>真实系统中的体现</h2>
+
+<div class="sys-diagram">
+  <div class="sys-block cpu">CPU Core<br><span style="font-weight:400;font-size:0.85em">ARM / x86 / RISC-V</span></div>
+  <span class="sys-arrow">→</span>
+  <div class="sys-block cache">L1/L2/L3 Cache<br><span style="font-weight:400;font-size:0.85em">SRAM</span></div>
+  <span class="sys-arrow">→</span>
+  <div class="sys-block dram">Main Memory<br><span style="font-weight:400;font-size:0.85em">DRAM (DDR)</span></div>
+  <span class="sys-arrow">⇢</span>
+  <div style="display:flex;flex-direction:column;gap:0.3rem;">
+    <div class="sys-block storage">SSD / eMMC / UFS<br><span style="font-weight:400;font-size:0.85em">NAND Flash</span></div>
+    <div class="sys-block" style="border-color:#a0c0e8;font-size:0.78em;">NOR Flash<br><span style="font-weight:400;">Boot Code</span></div>
+  </div>
+</div>
+
+<p style="text-align:center;font-size:0.82em;color:var(--sidenote);">图2：现代嵌入式/移动系统中的存储子系统。每种存储器各司其职。</p>
+
+<h2>📝 检索练习</h2>
+
+<div class="quiz" id="q1">
+  <div class="quiz-question">Q1: 以下哪种存储器在断电后仍能保留数据？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q1" data-a="0">A. SRAM</div>
+    <div class="quiz-option" data-q="q1" data-a="1">B. DRAM</div>
+    <div class="quiz-option" data-q="q1" data-a="2">C. NAND Flash</div>
+    <div class="quiz-option" data-q="q1" data-a="3">D. SRAM 和 DRAM</div>
+  </div>
+  <div class="quiz-feedback" id="q1-fb"></div>
+</div>
+
+<div class="quiz" id="q2">
+  <div class="quiz-question">Q2: 为什么不能用 NAND Flash 替代 DRAM 作为计算机的主内存？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q2" data-a="0">A. NAND Flash 是易失性的，断电丢数据</div>
+    <div class="quiz-option" data-q="q2" data-a="1">B. NAND Flash 读写太慢，且写入寿命有限</div>
+    <div class="quiz-option" data-q="q2" data-a="2">C. NAND Flash 的每 bit 成本远高于 DRAM</div>
+    <div class="quiz-option" data-q="q2" data-a="3">D. NAND Flash 不能被 CPU 直接寻址</div>
+  </div>
+  <div class="quiz-feedback" id="q2-fb"></div>
+</div>
+
+<div class="quiz" id="q3">
+  <div class="quiz-question">Q3: 6T SRAM 单元和 1T1C DRAM 单元，哪个的芯片面积效率更高（每 bit 占用面积更小）？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q3" data-a="0">A. SRAM — 晶体管更多，可以做得更紧凑</div>
+    <div class="quiz-option" data-q="q3" data-a="1">B. DRAM — 单元只有 1 个晶体管和 1 个电容，面积约为 SRAM 的 1/20</div>
+    <div class="quiz-option" data-q="q3" data-a="2">C. 两者面积效率相同</div>
+    <div class="quiz-option" data-q="q3" data-a="3">D. 取决于制程工艺</div>
+  </div>
+  <div class="quiz-feedback" id="q3-fb"></div>
+</div>
+
+<div class="quiz" id="q4">
+  <div class="quiz-question">Q4: NOR Flash 相比 NAND Flash 的主要优势是什么？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q4" data-a="0">A. 每 bit 成本更低</div>
+    <div class="quiz-option" data-q="q4" data-a="1">B. 写入速度更快</div>
+    <div class="quiz-option" data-q="q4" data-a="2">C. 读取速度快，支持按字节随机寻址，可以在芯片上直接执行代码</div>
+    <div class="quiz-option" data-q="q4" data-a="3">D. 写入耐久度更高</div>
+  </div>
+  <div class="quiz-feedback" id="q4-fb"></div>
+</div>
+
+<h2>📖 推荐阅读</h2>
+
+<ul>
+  <li><strong>必读：</strong> <a href="https://www.snia.org/education">SNIA — "How Flash Memory Works" 系列教程</a>（免费注册）。理解 NAND Flash 的工业级视角。</li>
+  <li><strong>深入：</strong> Jacob, Wang, Ng — <em>Memory Systems: Cache, DRAM, Disk</em>，第 1 章"Introduction to Memory Systems"。对存储层次结构最权威的阐述。</li>
+</ul>
+
+<h2>🧭 下一课预告</h2>
+<p>下一课我们将拆开一个存储单元来看：<strong>6T SRAM 单元是怎么"记住"一个 bit 的？1T1C DRAM 单元又是怎么做的？</strong>理解这两种最基本的存储单元，是看懂所有存储器 datasheet 的第一步。</p>
+
+<div class="lesson-footer">
+  <p><strong>参考文档：</strong> <a href="../reference/memory-technology-comparison.html">存储器技术对比速查表</a>（含关键参数和典型型号）</p>
+  <p><strong>有疑问？</strong> 在对话中直接问我——详细解释 datasheet 中的概念、深入某个话题、或者调整课程方向都行。</p>
+  <p style="margin-top:0.8rem;"><span class="tag">#memory-hierarchy</span><span class="tag">#SRAM</span><span class="tag">#DRAM</span><span class="tag">#NAND</span><span class="tag">#NOR</span></p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 2, good: "正确！NAND Flash（和 NOR Flash）是非易失性存储器，依靠浮栅存储电荷来保持数据。SRAM 和 DRAM 断电即丢失数据。", bad: "不对。SRAM 和 DRAM 都是易失性的——断电后数据消失。NAND Flash 是非易失的，这正是它被用作存储的原因。" },
+    q2: { correct: 1, good: "对了！NAND Flash 读取延迟是 DRAM 的 ~1000 倍（微秒 vs 纳秒），写入更慢，且每个单元只能擦写约 10³–10⁵ 次。如果用作主内存，系统根本无法运行。", bad: "最关键的原因是速度（NAND 比 DRAM 慢约 1000 倍）和写入寿命有限（只能写几千到几万次）。NAND 是非易失的（所以 A 错了），每 bit 成本低于 DRAM（所以 C 错了），且可以通过控制器被 CPU 间接访问（D 不是根本原因）。" },
+    q3: { correct: 1, good: "正确！1T1C DRAM 单元的面积约 6F²，而 6T SRAM 单元约 120F²——约 20 倍的差距。这就是为什么同样面积的芯片，DRAM 容量远大于 SRAM。", bad: "DRAM 单元（1 个晶体管 + 1 个电容）面积约 6F²，而 SRAM 单元（6 个晶体管）约 120F²，差距约 20 倍。所以 DRAM 的面积效率远高于 SRAM。" },
+    q4: { correct: 2, good: "正确！NOR Flash 读取速度快（~70-100ns），支持按字节随机寻址，这意味着 CPU 可以直接从 NOR Flash 执行代码（XiP: eXecute-in-Place）。这就是为什么 Boot ROM 和固件常用 NOR Flash。", bad: "NOR Flash 的核心优势是读取速度快且支持按字节随机寻址，允许 CPU 直接在上面执行代码。NAND 每 bit 成本更低，写入速度相当或更快（取决于类型）。" }
+  };
+
+  document.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q;
+      const fb = document.getElementById(qid + '-fb');
+      const opts = document.querySelectorAll(`[data-q="${qid}"]`);
+      const ans = answers[qid];
+
+      // Prevent re-answering
+      if (fb.classList.contains('show')) return;
+
+      opts.forEach(o => o.classList.remove('selected', 'correct', 'wrong'));
+      this.classList.add('selected');
+
+      if (parseInt(this.dataset.a) === ans.correct) {
+        this.classList.add('correct');
+        fb.className = 'quiz-feedback show good';
+        fb.textContent = '✓ ' + ans.good;
+      } else {
+        this.classList.add('wrong');
+        fb.className = 'quiz-feedback show bad';
+        fb.textContent = '✗ ' + ans.bad;
+        // Also highlight correct
+        opts.forEach(o => { if (parseInt(o.dataset.a) === ans.correct) o.classList.add('correct'); });
+      }
+    });
+  });
+})();
+</script>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

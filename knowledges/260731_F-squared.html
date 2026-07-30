@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F² — 最小特征尺寸的含义</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>F² — 最小特征尺寸的含义</h1>
+<p style="color:var(--sidenote);">260731 ·<span class="tag">基础概念</span><span class="tag">工艺</span><span class="tag">单元面积</span></p>
+
+<h2>定义</h2>
+
+<p><strong>F</strong>（Feature Size）是半导体制造中的<strong>最小特征尺寸</strong>——光刻工艺能可靠蚀刻出的最小线条宽度。对于存储器件，F 通常等于<strong>半间距（half-pitch）</strong>，即相邻两条金属线之间距离的一半。</p>
+
+<p><strong>F²</strong> 则是 F 的平方，用作衡量存储单元面积的基准单位。</p>
+
+<div class="callout">
+  <div class="callout-title">📐 实际例子</div>
+  <p>以 20nm 工艺为例：F = 20nm，F² = 400 nm²。</p>
+  <ul style="margin:0.3rem 0;">
+    <li>6T SRAM 单元 ≈ 120F² = 48,000 nm² = 0.048 μm²</li>
+    <li>1T1C DRAM 单元 ≈ 6F² = 2,400 nm² = 0.0024 μm²</li>
+    <li>NAND Flash 单元 ≈ 4F² = 1,600 nm² = 0.0016 μm²</li>
+  </ul>
+  <p style="margin:0.3rem 0 0;">同样 20nm 工艺下，一个 SRAM 单元的面积可以放 30 个 NAND 单元！</p>
+</div>
+
+<h2>为什么用 F² 而不是 μm²？</h2>
+
+<p>使用 F² 作为单位的最大好处是<strong>与工艺节点无关</strong>。一个"6F² DRAM 单元"在 30nm、20nm、10nm 工艺下都是 6F²——实际面积随工艺缩小而平方级缩小，但设计规则保持不变。这使得不同工艺代之间的密度比较变得直观。</p>
+
+<h2>关键数值速记</h2>
+
+<table>
+  <thead><tr><th>存储技术</th><th>单元面积 (F²)</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>SRAM (6T)</td><td>~120 F²</td><td>6个晶体管，面积最大</td></tr>
+    <tr><td>DRAM (1T1C)</td><td>~6 F²</td><td>电容占主导面积；DDR5 世代约 4-6F²</td></tr>
+    <tr><td>NAND Flash (平面)</td><td>~4 F²</td><td>单个浮栅管，最紧凑的平面单元</td></tr>
+    <tr><td>3D NAND</td><td>等效 << 1F²</td><td>垂直堆叠，每层分摊面积极小</td></tr>
+    <tr><td>NOR Flash</td><td>~10 F²</td><td>每个 cell 需要独立的位线接触</td></tr>
+  </tbody>
+</table>
+
+<h2>与日常工作的关联</h2>
+
+<p>当你在 datasheet 中看到某 NAND Flash 芯片标注 "Die Size: 60mm², 128Gb"，你可以快速心算：</p>
+<ul>
+  <li>128Gb = 16GB = 16 × 10⁹ × 8 bits ≈ 1.28 × 10¹¹ bits</li>
+  <li>60mm² / 1.28×10¹¹ ≈ 4.7 × 10⁻¹⁰ mm²/bit ≈ 470 nm²/bit</li>
+  <li>对于 20nm 工艺，F² = 400 nm² → 约 1.2F²/bit</li>
+  <li>如果标注的是 TLC（3bit/cell），则约 3.5F²/cell → 合理，接近理论 4F²</li>
+</ul>
+
+<p>这个快速校验能帮你判断 datasheet 数据是否合理。</p>
+
+<div class="lesson-footer">
+  <p><strong>关联课程：</strong> <a href="../lessons/0001-memory-hierarchy.html">Lesson 0001 — 存储器层次结构</a>（参考其中的对比表）</p>
+  <p><strong>关联参考：</strong> <a href="../reference/memory-technology-comparison.html">存储器技术对比速查表</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

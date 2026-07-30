@@ -1,0 +1,440 @@
+/* === Storage Devices Learning — Base Stylesheet === */
+/* "Precision Instrument" — signal blue on silicon, light & dark */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ============================================================
+   Light mode (default)
+   ============================================================ */
+:root {
+  --bg:              #fafbfc;
+  --text:            #1a2332;
+  --text-muted:      #5e6f82;
+  --accent:          #1a6fb5;
+  --accent-hover:    #155a94;
+  --accent-dim:      rgba(26, 111, 181, 0.10);
+  --surface:         #f0f3f6;
+  --surface-hover:   #e8ecf0;
+  --border:          #dde2e8;
+  --border-light:    #e8ecf1;
+  --code-bg:         #eef1f5;
+  --callout-bg:      #f0f5fa;
+  --callout-border:  #c8d8e8;
+  --highlight:       #fdf3d0;
+  --sidenote:        #6b7d94;
+  --success:         #1f8b4c;
+  --success-bg:      #e6f4ec;
+  --error:           #c0392b;
+  --error-bg:        #fdf0ee;
+  --link:            #1a6fb5;
+
+  /* Theme toggle dimensions */
+  --toggle-width:    44px;
+  --toggle-height:   24px;
+  --toggle-padding:  3px;
+}
+
+/* ============================================================
+   Dark mode
+   ============================================================ */
+[data-theme="dark"] {
+  --bg:              #0d1520;
+  --text:            #e2e8f0;
+  --text-muted:      #8899b0;
+  --accent:          #4da8e8;
+  --accent-hover:    #70bcf0;
+  --accent-dim:      rgba(77, 168, 232, 0.14);
+  --surface:         #182232;
+  --surface-hover:   #1e2a3d;
+  --border:          #253048;
+  --border-light:    #1e2a3d;
+  --code-bg:         #182232;
+  --callout-bg:      #141e30;
+  --callout-border:  #1e3458;
+  --highlight:       #3d2e0a;
+  --sidenote:        #7088a5;
+  --success:         #2dac6e;
+  --success-bg:      #14261e;
+  --error:           #e0554a;
+  --error-bg:        #2d1717;
+  --link:            #4da8e8;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  /* Smooth theme transitions — respect reduced motion */
+  transition: background 0.3s ease, color 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { transition: none; }
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+  /* Accent trace — subtle 1px signal line at top */
+  border-top: 2px solid var(--accent);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
+}
+
+/* ============================================================
+   Typography
+   ============================================================ */
+h1, h2, h3, h4 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 2.5rem 0 0.75rem;
+  color: var(--text);
+}
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-top: 0;
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-size: 1.35rem;
+  margin-top: 2.5rem;
+  letter-spacing: -0.01em;
+}
+h3 { font-size: 1.1rem; font-weight: 650; }
+
+p { margin: 0.75rem 0; }
+
+a {
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-dim);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+a:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent-hover);
+}
+
+ul, ol { margin: 0.5rem 0 0.5rem 1.5rem; }
+li { margin: 0.3rem 0; }
+
+strong { font-weight: 650; }
+
+/* ============================================================
+   Code
+   ============================================================ */
+code {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 0.88em;
+  font-weight: 450;
+  background: var(--code-bg);
+  padding: 0.12em 0.35em;
+  border-radius: 4px;
+  color: var(--text);
+}
+pre {
+  background: var(--code-bg);
+  padding: 1rem 1.2rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  font-size: 0.88em;
+  line-height: 1.55;
+  border: 1px solid var(--border-light);
+}
+pre code { background: none; padding: 0; border: none; }
+
+/* ============================================================
+   Rules & Dividers
+   ============================================================ */
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+/* ============================================================
+   Blockquote
+   ============================================================ */
+blockquote {
+  border-left: 3px solid var(--accent);
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  color: var(--text-muted);
+  font-style: italic;
+  background: var(--callout-bg);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ============================================================
+   Callout Boxes
+   ============================================================ */
+.callout {
+  background: var(--callout-bg);
+  border: 1px solid var(--callout-border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+}
+.callout-title {
+  font-weight: 650;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+/* ============================================================
+   Tables
+   ============================================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2rem 0;
+  font-size: 0.92em;
+}
+thead th {
+  text-align: left;
+  font-weight: 650;
+  border-bottom: 2px solid var(--text);
+  padding: 0.5rem 0.75rem;
+}
+tbody td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tbody tr:nth-child(even) { background: var(--surface); }
+
+/* ============================================================
+   Quiz Widget
+   ============================================================ */
+.quiz { margin: 1.5rem 0; }
+.quiz-question {
+  font-weight: 650;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+.quiz-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.quiz-option {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  user-select: none;
+  font-size: 0.95em;
+  background: var(--bg);
+  color: var(--text);
+}
+.quiz-option:hover { background: var(--surface-hover); border-color: var(--text-muted); }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-dim); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+.quiz-option.wrong   { border-color: var(--error);   background: var(--error-bg);   color: var(--error); }
+.quiz-feedback {
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 5px;
+  font-size: 0.92em;
+  display: none;
+  line-height: 1.5;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.good { background: var(--success-bg); color: var(--success); }
+.quiz-feedback.bad  { background: var(--error-bg);   color: var(--error); }
+
+/* ============================================================
+   Figures
+   ============================================================ */
+figure { margin: 1.5rem 0; }
+figure img { max-width: 100%; border-radius: 4px; }
+figcaption {
+  font-size: 0.85em;
+  color: var(--sidenote);
+  margin-top: 0.4rem;
+}
+
+/* ============================================================
+   Lesson Navigation
+   ============================================================ */
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+.lesson-nav .prev, .lesson-nav .next { color: var(--link); border-bottom: none; }
+.lesson-meta { color: var(--sidenote); font-size: 0.85em; }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.lesson-footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.85em;
+  color: var(--sidenote);
+}
+
+/* ============================================================
+   Definition Lists
+   ============================================================ */
+dt { font-weight: 650; margin-top: 0.6rem; color: var(--text); }
+dd { margin-left: 1.5rem; color: var(--text-muted); }
+
+/* ============================================================
+   Tags / Pills
+   ============================================================ */
+.tag {
+  display: inline-block;
+  font-size: 0.78em;
+  font-weight: 500;
+  background: var(--surface);
+  padding: 0.15em 0.55em;
+  border-radius: 4px;
+  margin-right: 0.3em;
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+}
+
+/* ============================================================
+   Generic Hierarchy Diagram (shared)
+   ============================================================ */
+.hierarchy-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 1.5rem 0;
+  font-size: 0.88em;
+}
+.hierarchy-level {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  min-width: 260px;
+  text-align: center;
+  position: relative;
+}
+.hierarchy-arrow {
+  font-size: 1.3em;
+  color: var(--sidenote);
+  margin: 0.1rem 0;
+}
+.hierarchy-label { font-weight: 600; }
+.hierarchy-detail { color: var(--text-muted); font-size: 0.85em; }
+
+/* ============================================================
+   Theme Toggle — injected by theme.js
+   ============================================================ */
+.theme-toggle {
+  position: fixed;
+  top: 1.2rem;
+  right: 1.2rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 10px 4px 4px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78em;
+  color: var(--text-muted);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-toggle:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent-dim);
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The sliding knob */
+.theme-toggle-knob {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.theme-toggle-knob::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: var(--border);
+  transition: background 0.25s ease;
+}
+.theme-toggle-knob::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+[data-theme="dark"] .theme-toggle-knob::before {
+  background: var(--accent);
+}
+[data-theme="dark"] .theme-toggle-knob::after {
+  transform: translateX(12px);
+}
+
+/* Label icon */
+.theme-toggle-icon { font-size: 0.95em; line-height: 1; }
+
+@media print {
+  .theme-toggle { display: none !important; }
+}
+
+/* ============================================================
+   Print Styles
+   ============================================================ */
+@media print {
+  body {
+    font-size: 10.5pt;
+    max-width: none;
+    padding: 0.5in;
+    border-top: none;
+    background: #fff;
+    color: #000;
+  }
+  .quiz-options { gap: 0.15rem; }
+  .quiz-option { padding: 0.3rem 0.5rem; border: 1px solid #ccc; background: #fff; }
+  a { border-bottom: none; color: #000; }
+  .callout { border-left: 3px solid #999; background: #fafafa; }
+  pre, code { background: #f5f5f5; border: 1px solid #ddd; }
+  .theme-toggle { display: none !important; }
+  @page { margin: 0.75in; }
+}

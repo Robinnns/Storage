@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>存储器技术对比速查表</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .ref-table { font-size: 0.88em; }
+  .ref-table td { vertical-align: top; }
+  .ref-table td:first-child { white-space: nowrap; }
+  @media print {
+    body { font-size: 9pt; }
+    h1 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>存储器技术对比速查表</h1>
+<p style="color:var(--sidenote);">更新于 2026-07-31 · 随学习进度持续更新</p>
+
+<h2>一、四种核心存储技术对比</h2>
+
+<table class="ref-table">
+  <thead>
+    <tr>
+      <th>参数</th>
+      <th>SRAM</th>
+      <th>DRAM (DDR5)</th>
+      <th>NAND Flash (TLC)</th>
+      <th>NOR Flash</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>存储单元结构</td>
+      <td>6T (6个晶体管)</td>
+      <td>1T1C (1管+1电容)</td>
+      <td>1T 浮栅 (串联)</td>
+      <td>1T 浮栅 (并联)</td>
+    </tr>
+    <tr>
+      <td>单元面积</td>
+      <td>~120 F²</td>
+      <td>~6 F²</td>
+      <td>~4 F² (平面)<br>等效更小 (3D)</td>
+      <td>~10 F²</td>
+    </tr>
+    <tr>
+      <td>读延迟</td>
+      <td>0.5–2 ns</td>
+      <td>10–20 ns (tAA)<br>行周期 ~45ns</td>
+      <td>20–100 μs (页读)</td>
+      <td>70–100 ns</td>
+    </tr>
+    <tr>
+      <td>写延迟</td>
+      <td>0.5–2 ns</td>
+      <td>10–20 ns</td>
+      <td>200–2000 μs (编程)</td>
+      <td>0.5–10 μs</td>
+    </tr>
+    <tr>
+      <td>擦除延迟</td>
+      <td>N/A (不需要)</td>
+      <td>N/A (不需要)</td>
+      <td>1–10 ms (块擦除)</td>
+      <td>0.5–5 秒(块擦除)</td>
+    </tr>
+    <tr>
+      <td>读取粒度</td>
+      <td>字节/字</td>
+      <td>字节 (cache line)</td>
+      <td>页 (8–16KB)</td>
+      <td>字节</td>
+    </tr>
+    <tr>
+      <td>写入/编程粒度</td>
+      <td>字节/字</td>
+      <td>字节</td>
+      <td>页 (8–16KB)</td>
+      <td>字节/字</td>
+    </tr>
+    <tr>
+      <td>擦除粒度</td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td>块 (几MB)</td>
+      <td>块 (64–256KB)</td>
+    </tr>
+    <tr>
+      <td>易失性</td>
+      <td>易失</td>
+      <td>易失</td>
+      <td>非易失</td>
+      <td>非易失</td>
+    </tr>
+    <tr>
+      <td>数据保持时间</td>
+      <td>只要通电</td>
+      <td>只要通电+刷新</td>
+      <td>1–10 年</td>
+      <td>10–20 年</td>
+    </tr>
+    <tr>
+      <td>写入耐久 (P/E)</td>
+      <td>无限</td>
+      <td>无限</td>
+      <td>~10³–10⁴ (TLC/QLC)<br>~10⁵ (MLC)<br>~10⁵–10⁶ (SLC)</td>
+      <td>~10⁵</td>
+    </tr>
+    <tr>
+      <td>读功耗</td>
+      <td>低</td>
+      <td>中</td>
+      <td>中</td>
+      <td>低–中</td>
+    </tr>
+    <tr>
+      <td>待机功耗</td>
+      <td>高 (漏电流)</td>
+      <td>中 (需刷新)</td>
+      <td>极低</td>
+      <td>极低</td>
+    </tr>
+    <tr>
+      <td>接口标准</td>
+      <td>片上总线</td>
+      <td>DDR4/5, LPDDR4/5</td>
+      <td>ONFI, Toggle DDR</td>
+      <td>SPI, 并行</td>
+    </tr>
+    <tr>
+      <td>典型密度</td>
+      <td>KB–MB 级</td>
+      <td>4GB–128GB</td>
+      <td>16GB–2TB+</td>
+      <td>16MB–256MB</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>二、Flash 内部类型对比</h2>
+
+<table class="ref-table">
+  <thead>
+    <tr>
+      <th>参数</th>
+      <th>SLC</th>
+      <th>MLC</th>
+      <th>TLC</th>
+      <th>QLC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>每 cell bit 数</td>
+      <td>1</td>
+      <td>2</td>
+      <td>3</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>电压电平数</td>
+      <td>2</td>
+      <td>4</td>
+      <td>8</td>
+      <td>16</td>
+    </tr>
+    <tr>
+      <td>P/E 循环</td>
+      <td>~100,000</td>
+      <td>~10,000</td>
+      <td>~3,000</td>
+      <td>~1,000</td>
+    </tr>
+    <tr>
+      <td>读延迟</td>
+      <td>最快</td>
+      <td>快</td>
+      <td>中</td>
+      <td>慢</td>
+    </tr>
+    <tr>
+      <td>写延迟</td>
+      <td>最快</td>
+      <td>快</td>
+      <td>中</td>
+      <td>慢</td>
+    </tr>
+    <tr>
+      <td>每 bit 成本</td>
+      <td>最高</td>
+      <td>中</td>
+      <td>低</td>
+      <td>最低</td>
+    </tr>
+    <tr>
+      <td>典型用途</td>
+      <td>工业/企业 SSD</td>
+      <td>企业 SSD</td>
+      <td>消费 SSD, 手机</td>
+      <td>大容量归档</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:0.82em;color:var(--sidenote);">* P/E = Program/Erase 循环次数。超过此值后数据保持能力急剧下降。</p>
+
+<h2>三、DRAM 各代对比</h2>
+
+<table class="ref-table">
+  <thead>
+    <tr>
+      <th>参数</th>
+      <th>DDR3</th>
+      <th>DDR4</th>
+      <th>DDR5</th>
+      <th>LPDDR5</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>数据率 (MT/s)</td>
+      <td>800–2133</td>
+      <td>1600–3200</td>
+      <td>4800–8400+</td>
+      <td>6400–8533</td>
+    </tr>
+    <tr>
+      <td>电压 (VDD)</td>
+      <td>1.5V</td>
+      <td>1.2V</td>
+      <td>1.1V</td>
+      <td>0.5V (VDDQ)</td>
+    </tr>
+    <tr>
+      <td>预取 (Prefetch)</td>
+      <td>8n</td>
+      <td>8n</td>
+      <td>16n</td>
+      <td>16n</td>
+    </tr>
+    <tr>
+      <td>Bank 分组</td>
+      <td>8 banks</td>
+      <td>4 groups × 4 banks</td>
+      <td>8 groups × 4 banks</td>
+      <td>4 groups × 4 banks</td>
+    </tr>
+    <tr>
+      <td>Burst Length</td>
+      <td>8 (固定)</td>
+      <td>8 (固定)</td>
+      <td>16 (固定)</td>
+      <td>16/32</td>
+    </tr>
+    <tr>
+      <td>通道架构</td>
+      <td>64-bit 通道</td>
+      <td>64-bit 通道</td>
+      <td>2× 32-bit 子通道</td>
+      <td>16-bit 通道</td>
+    </tr>
+    <tr>
+      <td>片上 ECC</td>
+      <td>无</td>
+      <td>无</td>
+      <td>有 (单错校正)</td>
+      <td>可选</td>
+    </tr>
+    <tr>
+      <td>最大容量/芯片</td>
+      <td>8Gb</td>
+      <td>16Gb</td>
+      <td>64Gb</td>
+      <td>32Gb</td>
+    </tr>
+    <tr>
+      <td>JEDEC 标准</td>
+      <td>JESD79-3</td>
+      <td>JESD79-4</td>
+      <td>JESD79-5</td>
+      <td>JESD209-5</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>四、关键接口标准速览</h2>
+
+<table class="ref-table">
+  <thead>
+    <tr>
+      <th>接口</th>
+      <th>连接什么</th>
+      <th>速度</th>
+      <th>引脚数</th>
+      <th>标准制定方</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ONFI</td>
+      <td>NAND Flash ↔ 控制器</td>
+      <td>200–800 MT/s (NV-DDR3)</td>
+      <td>~20+ 信号线</td>
+      <td>ONFI 工作组</td>
+    </tr>
+    <tr>
+      <td>Toggle DDR</td>
+      <td>NAND Flash ↔ 控制器</td>
+      <td>400–1200 MT/s (Toggle 5.0)</td>
+      <td>~20+ 信号线</td>
+      <td>Samsung/Toshiba</td>
+    </tr>
+    <tr>
+      <td>eMMC</td>
+      <td>NAND + 控制器 ↔ Host</td>
+      <td>最高 400 MB/s (HS400)</td>
+      <td>10 (CLK, CMD, DATA0-7)</td>
+      <td>JEDEC JESD84</td>
+    </tr>
+    <tr>
+      <td>UFS</td>
+      <td>NAND + 控制器 ↔ Host</td>
+      <td>最高 4.2 GB/s (UFS 4.0)</td>
+      <td>差分对 (M-PHY)</td>
+      <td>JEDEC JESD220</td>
+    </tr>
+    <tr>
+      <td>DDR4/5</td>
+      <td>CPU ↔ DRAM</td>
+      <td>1600–8400 MT/s</td>
+      <td>~280+ 引脚 (DIMM)</td>
+      <td>JEDEC JESD79</td>
+    </tr>
+    <tr>
+      <td>SPI NOR</td>
+      <td>MCU ↔ NOR Flash</td>
+      <td>最高 200+ MB/s (Octal SPI)</td>
+      <td>6–8</td>
+      <td>各厂商 (事实标准)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="lesson-footer">
+  <p><strong>相关课程：</strong> <a href="../lessons/0001-memory-hierarchy.html">Lesson 0001 — 存储器层次结构</a></p>
+  <p>此速查表会随着课程深入持续更新和细化。</p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

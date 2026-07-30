@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知识点速查总表</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .index-table { font-size: 0.9em; }
+  .index-table td { vertical-align: middle; }
+  .index-table .date { white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: var(--sidenote); }
+  .index-table .topic { font-weight: 600; }
+  .index-table .topic a { border-bottom: none; }
+  .index-table .tags { font-size: 0.85em; }
+  .index-table .links { font-size: 0.85em; white-space: nowrap; }
+  .index-table .links a { margin-right: 0.5em; }
+
+  .index-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .index-count { font-size: 0.9em; color: var(--sidenote); }
+
+  @media print {
+    .index-table { font-size: 8pt; }
+  }
+</style>
+</head>
+<body>
+
+<div class="index-header">
+  <div>
+    <h1 style="margin:0;">📋 知识点速查总表</h1>
+    <p style="margin:0.25rem 0 0;color:var(--sidenote);">随身记录的存储器件小知识点 · 按时间倒序</p>
+  </div>
+  <span class="index-count" id="entry-count">0 条</span>
+</div>
+
+<hr>
+
+<table class="index-table" id="index-body">
+  <thead>
+    <tr>
+      <th>日期</th>
+      <th>知识点</th>
+      <th>标签</th>
+      <th>关联</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Entries will be listed here, newest first -->
+  </tbody>
+</table>
+
+<div style="margin-top:2rem;font-size:0.82em;color:var(--sidenote);">
+  <p>💡 <strong>使用方式：</strong>每次学到零散知识点时，在 <code>knowledges/</code> 下新建 <code>YYMMDD_Topic.html</code>，然后在下方表格中添加一行。每个知识点文件底部都有"← 返回总表"的链接，双向跳转。</p>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>相关：</strong> <a href="../lessons/0001-memory-hierarchy.html">Lesson 0001 — 存储器层次结构</a> · <a href="../reference/memory-technology-comparison.html">存储器技术对比速查表</a></p>
+</div>
+
+<script>
+// === ENTRY REGISTRY ===
+// Add new entries here — newest first. This drives the table.
+const entries = [
+  // {
+  //   date: '260801',
+  //   file: '260801_SomeTopic.html',
+  //   topic: '主题名称',
+  //   tags: ['tag1', 'tag2'],
+  //   related: { lesson: '0001', ref: 'memory-tech' }
+  // },
+  {
+    date: '260731',
+    file: '260731_F-squared.html',
+    topic: 'F² — 最小特征尺寸的含义',
+    summary: 'F 代表 Feature Size（最小特征尺寸），F² 是衡量存储单元面积的基准单位。为什么 SRAM 单元是 ~120F² 而 NAND 单元只有 ~4F²？',
+    tags: ['基础概念', '工艺', '单元面积'],
+    related: { lesson: '0001' }
+  }
+];
+// === END REGISTRY ===
+
+(function() {
+  const tbody = document.querySelector('#index-body tbody');
+  const countEl = document.getElementById('entry-count');
+
+  countEl.textContent = entries.length + ' 条';
+
+  entries.forEach(e => {
+    const tagsHtml = e.tags.map(t => `<span class="tag">${t}</span>`).join('');
+
+    let relatedHtml = '';
+    if (e.related) {
+      const links = [];
+      if (e.related.lesson) {
+        links.push(`<a href="../lessons/${e.related.lesson.padStart(4,'0')}-memory-hierarchy.html">📘 L${e.related.lesson}</a>`);
+      }
+      if (e.related.ref) {
+        links.push(`<a href="../reference/${e.related.ref}.html">📄 Ref</a>`);
+      }
+      relatedHtml = links.join(' ');
+    }
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="date">${e.date}</td>
+      <td class="topic"><a href="${e.file}" title="${e.summary}">${e.topic}</a><br><span style="font-size:0.82em;color:var(--sidenote);">${e.summary}</span></td>
+      <td class="tags">${tagsHtml}</td>
+      <td class="links">${relatedHtml}</td>
+    `;
+    tbody.appendChild(row);
+  });
+})();
+</script>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>
