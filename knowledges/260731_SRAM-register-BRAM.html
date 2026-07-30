@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRAM vs 寄存器 vs BRAM — 辨析</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>SRAM ≠ 寄存器：存储术语辨析</h1>
+<p style="color:var(--sidenote);">260731 · <span class="tag">SRAM</span><span class="tag">Cache</span><span class="tag">寄存器</span><span class="tag">BRAM</span><span class="tag">FPGA</span></p>
+
+<h2>1. SRAM vs CPU 寄存器</h2>
+
+<p>这是中文工程师中常见的混淆点。<strong>SRAM 不是寄存器。</strong></p>
+
+<table>
+  <thead><tr><th>属性</th><th>CPU 寄存器</th><th>SRAM Cache</th></tr></thead>
+  <tbody>
+    <tr><td>位置</td><td>CPU 数据通路内部</td><td>CPU 旁边，独立阵列</td></tr>
+    <tr><td>寻址方式</td><td>指令直接编码（如 R0, R1）</td><td>通过内存地址访问</td></tr>
+    <tr><td>访问延迟</td><td>0 周期（组合逻辑内）</td><td>1–20 周期</td></tr>
+    <tr><td>物理实现</td><td>触发器 (Flip-Flop) 或锁存器</td><td>6T SRAM 单元阵列</td></tr>
+    <tr><td>数量</td><td>几十～几百</td><td>百万～亿级 bit</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">🔑 通俗类比</div>
+  <ul style="margin:0.3rem 0;">
+    <li><strong>寄存器</strong> = 你手里正在写的草稿纸，低头就能看到</li>
+    <li><strong>SRAM Cache</strong> = 桌上的文件夹，伸手够得到</li>
+    <li><strong>DRAM</strong> = 身后的书架，需要站起来走过去</li>
+  </ul>
+</div>
+
+<h2>2. L1 / L2 / L3 Cache 的分工</h2>
+
+<p>三级 Cache <strong>全部用 SRAM 制造</strong>，因容量和物理距离不同而天然形成层次：</p>
+
+<table>
+  <thead><tr><th>层级</th><th>容量</th><th>延迟</th><th>共享方式</th><th>特点</th></tr></thead>
+  <tbody>
+    <tr><td>L1 I-Cache</td><td>32KB</td><td>~0.5ns</td><td>每核独享</td><td>只存指令</td></tr>
+    <tr><td>L1 D-Cache</td><td>32KB</td><td>~0.5ns</td><td>每核独享</td><td>只存数据</td></tr>
+    <tr><td>L2</td><td>256KB–1MB</td><td>2–5ns</td><td>每核或每簇</td><td>指令+数据合并</td></tr>
+    <tr><td>L3</td><td>8–32MB</td><td>5–20ns</td><td>全芯片共享</td><td>最后一道防线</td></tr>
+  </tbody>
+</table>
+
+<h2>3. BRAM（Block RAM）</h2>
+
+<p>BRAM 是 FPGA 领域的术语，指的是 FPGA 芯片内<strong>集成的专用 SRAM 硬核模块</strong>。</p>
+
+<table>
+  <thead><tr><th></th><th>BRAM</th><th>分布式 RAM</th><th>DRAM</th></tr></thead>
+  <tbody>
+    <tr><td>本质</td><td>SRAM 硬核</td><td>LUT 拼接的"伪 SRAM"</td><td>1T1C DRAM</td></tr>
+    <tr><td>位置</td><td>FPGA 片内</td><td>FPGA 片内</td><td>PCB 上（片外）</td></tr>
+    <tr><td>容量</td><td>几十KB–几MB</td><td>几KB</td><td>GB 级</td></tr>
+    <tr><td>延迟</td><td>1–2 周期</td><td>1 周期</td><td>几十ns + 控制器开销</td></tr>
+    <tr><td>需要刷新？</td><td>否</td><td>否</td><td>是</td></tr>
+  </tbody>
+</table>
+
+<p><strong>一句话：</strong>BRAM 就是 FPGA 里的 SRAM 硬核。本质上和 CPU Cache 用同样的 6T SRAM 技术，只是封装形式不同。</p>
+
+<div class="lesson-footer">
+  <p><strong>关联课程：</strong> <a href="../lessons/0001-memory-hierarchy.html">Lesson 0001 — 存储器层次结构</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

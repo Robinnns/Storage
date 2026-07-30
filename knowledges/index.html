@@ -76,6 +76,22 @@ const entries = [
   // },
   {
     date: '260731',
+    file: '260731_SRAM-array-structure.html',
+    topic: 'SRAM 阵列结构详解 — 框图 + 五层拆解',
+    summary: '全景框图：Row Decoder → 6T单元网格 → 差分位线对 → Column Mux → Sense Amp。灵敏放大器在差分信号仅 50mV 时就做判定，是 SRAM 速度的关键。',
+    tags: ['SRAM', '6T单元', '阵列结构', '灵敏放大器', '差分位线'],
+    related: { lesson: '0001' }
+  },
+  {
+    date: '260731',
+    file: '260731_SRAM-register-BRAM.html',
+    topic: 'SRAM vs 寄存器 vs BRAM — 术语辨析',
+    summary: 'SRAM 不是寄存器！寄存器是 CPU 数据通路内的触发器，SRAM 是 6T 单元阵列。BRAM 是 FPGA 内的 SRAM 硬核。L1/L2/L3 Cache 全用 SRAM 制造。',
+    tags: ['SRAM', 'Cache', '寄存器', 'BRAM', 'FPGA'],
+    related: { lesson: '0001' }
+  },
+  {
+    date: '260731',
     file: '260731_F-squared.html',
     topic: 'F² — 最小特征尺寸的含义',
     summary: 'F 代表 Feature Size（最小特征尺寸），F² 是衡量存储单元面积的基准单位。为什么 SRAM 单元是 ~120F² 而 NAND 单元只有 ~4F²？',

@@ -7,6 +7,7 @@
 - Prefers structured knowledge building
 - This is ongoing reference material that grows with their role
 - **Do NOT auto-open HTML files in browser** after creating/editing — user will open them manually when needed
+- **Do NOT commit/push to git** unless explicitly asked — only when the user says "提交" or "push"
 
 ## Style Notes
 - Chinese/English bilingual teaching is welcome — the user communicates in Chinese

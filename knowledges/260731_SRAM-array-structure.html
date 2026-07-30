@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRAM 阵列结构详解</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  /* ── SRAM Array Diagram ── */
+  .sram-diagram {
+    margin: 2rem 0;
+    font-size: 0.82em;
+  }
+  .sram-diagram svg {
+    width: 100%;
+    height: auto;
+  }
+
+  /* ── 6T Cell Detail ── */
+  .cell-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 600px) {
+    .cell-detail { grid-template-columns: 1fr; }
+  }
+
+  /* ── Signal flow chain ── */
+  .signal-chain {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+    font-size: 0.85em;
+    justify-content: center;
+  }
+  .signal-block {
+    padding: 0.45rem 0.8rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    font-weight: 600;
+    text-align: center;
+  }
+  .signal-block.highlight {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .signal-arr {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.1em;
+  }
+
+  /* ── Numbers callout ── */
+  .numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin: 1.2rem 0;
+  }
+  @media (max-width: 500px) {
+    .numbers-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .num-card {
+    text-align: center;
+    padding: 0.8rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+  }
+  .num-card .val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .num-card .lbl {
+    font-size: 0.78em;
+    color: var(--sidenote);
+    margin-top: 0.2rem;
+  }
+
+  /* ── SVG Diagram Styles ── */
+  .diag-cell      { fill: var(--surface); stroke: var(--border); stroke-width: 1.2; }
+  .diag-cell-sel  { fill: var(--accent-dim); stroke: var(--accent); stroke-width: 2; }
+  .diag-wl        { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+  .diag-bl        { stroke: var(--text-muted); stroke-width: 1; fill: none; }
+  .diag-bl-comp   { stroke: var(--text-muted); stroke-width: 0.7; fill: none; stroke-dasharray: 4 3; }
+  .diag-label     { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; }
+  .diag-label-sm  { fill: var(--sidenote); font-family: 'Inter', sans-serif; font-size: 9px; }
+  .diag-box       { fill: var(--callout-bg); stroke: var(--callout-border); stroke-width: 1.2; rx: 6; }
+  .diag-box-accent { fill: var(--accent-dim); stroke: var(--accent); stroke-width: 1.5; rx: 6; }
+  .diag-text      { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; text-anchor: middle; }
+  .diag-text-sm   { fill: var(--sidenote); font-family: 'Inter', sans-serif; font-size: 9px; text-anchor: middle; }
+  .diag-text-bold { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; text-anchor: middle; }
+  .diag-arrow     { stroke: var(--accent); stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+  .diag-arrow-dim { stroke: var(--sidenote); stroke-width: 1; fill: none; marker-end: url(#arrowhead-dim); }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>SRAM 阵列结构详解</h1>
+<p style="color:var(--sidenote);">260731 · <span class="tag">SRAM</span><span class="tag">6T单元</span><span class="tag">阵列结构</span><span class="tag">灵敏放大器</span></p>
+
+<h2>全景框图</h2>
+
+<div class="sram-diagram">
+<svg viewBox="0 0 720 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--accent)"/>
+    </marker>
+    <marker id="arrowhead-dim" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--sidenote)"/>
+    </marker>
+    <!-- Grid pattern for cell array -->
+    <pattern id="cellGrid" x="110" y="60" width="48" height="32" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="48" height="32" class="diag-cell" rx="2"/>
+      <text x="24" y="20" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--sidenote)">6T</text>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="720" height="520" fill="none"/>
+
+  <!-- ===== Left: Row Decoder ===== -->
+  <rect x="10" y="60" width="85" height="384" class="diag-box-accent" rx="6"/>
+  <text x="52" y="40" class="diag-text-bold">Row Decoder</text>
+  <text x="52" y="55" class="diag-text-sm">行译码器</text>
+  <text x="52" y="85" class="diag-text-sm">A[13:6]</text>
+  <text x="52" y="97" class="diag-text-sm">高8位→1/256</text>
+
+  <!-- ===== Cell Array ===== -->
+  <rect x="110" y="60" width="480" height="384" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5" rx="4"/>
+
+  <!-- Grid cells — draw representative ones -->
+  <!-- Row 0 (selected) -->
+  <rect x="122" y="72" width="44" height="28" rx="2" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="144" y="89" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--accent)">6T</text>
+  <rect x="170" y="72" width="44" height="28" rx="2" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="192" y="89" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--accent)">6T</text>
+  <rect x="218" y="72" width="44" height="28" rx="2" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="240" y="89" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--accent)">6T</text>
+  <text x="340" y="89" text-anchor="middle" font-size="8" fill="var(--sidenote)">···</text>
+  <rect x="386" y="72" width="44" height="28" rx="2" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="408" y="89" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--accent)">6T</text>
+  <rect x="434" y="72" width="44" height="28" rx="2" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="456" y="89" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--accent)">6T</text>
+  <rect x="482" y="72" width="44" height="28" rx="2" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="504" y="89" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--accent)">6T</text>
+
+  <!-- Row 1 -->
+  <rect x="122" y="108" width="44" height="28" rx="2" class="diag-cell"/>
+  <text x="144" y="125" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--sidenote)">6T</text>
+  <text x="260" y="125" text-anchor="middle" font-size="8" fill="var(--sidenote)">·······························</text>
+  <rect x="482" y="108" width="44" height="28" rx="2" class="diag-cell"/>
+  <text x="504" y="125" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--sidenote)">6T</text>
+
+  <!-- Row dots -->
+  <text x="350" y="165" text-anchor="middle" font-size="11" fill="var(--sidenote)">⋮</text>
+
+  <!-- Row n-1 -->
+  <rect x="122" y="200" width="44" height="28" rx="2" class="diag-cell"/>
+  <text x="144" y="217" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--sidenote)">6T</text>
+  <text x="260" y="217" text-anchor="middle" font-size="8" fill="var(--sidenote)">·······························</text>
+  <rect x="482" y="200" width="44" height="28" rx="2" class="diag-cell"/>
+  <text x="504" y="217" text-anchor="middle" font-size="8" font-family="JetBrains Mono, monospace" fill="var(--sidenote)">6T</text>
+
+  <!-- Labels inside array -->
+  <text x="340" y="350" text-anchor="middle" font-size="10" font-family="Inter, sans-serif" fill="var(--sidenote)">256 × 1024 = 256Kb Cell Array</text>
+  <text x="340" y="367" text-anchor="middle" font-size="9" font-family="Inter, sans-serif" fill="var(--sidenote)">差分位线对: BL / BL̅ 垂直贯穿每列</text>
+
+  <!-- Word Lines -->
+  <line x1="96" y1="86" x2="590" y2="86" stroke="var(--accent)" stroke-width="1.8"/>
+  <text x="598" y="90" font-size="8" font-family="Inter, sans-serif" fill="var(--accent)" font-weight="600">WL₀</text>
+  <line x1="96" y1="122" x2="590" y2="122" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="96" y1="214" x2="590" y2="214" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="598" y="218" font-size="8" font-family="Inter, sans-serif" fill="var(--sidenote)">WL₂₅₅</text>
+
+  <!-- Bit Lines vertical -->
+  <line x1="144" y1="60" x2="144" y2="444" stroke="var(--text-muted)" stroke-width="0.8"/>
+  <line x1="192" y1="60" x2="192" y2="444" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="3 5"/>
+  <line x1="240" y1="60" x2="240" y2="444" stroke="var(--text-muted)" stroke-width="0.8"/>
+  <line x1="408" y1="60" x2="408" y2="444" stroke="var(--text-muted)" stroke-width="0.8"/>
+  <line x1="456" y1="60" x2="456" y2="444" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="3 5"/>
+  <line x1="504" y1="60" x2="504" y2="444" stroke="var(--text-muted)" stroke-width="0.8"/>
+  <text x="144" y="455" font-size="8" font-family="Inter, sans-serif" fill="var(--text-muted)" text-anchor="middle">BL₀</text>
+  <text x="192" y="455" font-size="8" font-family="Inter, sans-serif" fill="var(--sidenote)" text-anchor="middle">BL₀</text>
+  <text x="240" y="455" font-size="8" font-family="Inter, sans-serif" fill="var(--text-muted)" text-anchor="middle">BL₁</text>
+  <text x="456" y="455" font-size="8" font-family="Inter, sans-serif" fill="var(--sidenote)" text-anchor="middle">BL₁₀₂₂</text>
+  <text x="504" y="455" font-size="8" font-family="Inter, sans-serif" fill="var(--text-muted)" text-anchor="middle">BL₁₀₂₃</text>
+
+  <!-- ===== Bottom: Column Mux + Sense Amps ===== -->
+  <rect x="110" y="465" width="480" height="48" class="diag-box" rx="6"/>
+  <text x="350" y="484" class="diag-text-bold">Column Mux（列多路选择器） → Sense Amplifiers（灵敏放大器）</text>
+  <text x="350" y="500" class="diag-text-sm">A[5:0] → 1024列中选 32列 → 32个Sense Amp同时放大差分信号</text>
+
+  <!-- Arrow from array to column mux -->
+  <line x1="350" y1="446" x2="350" y2="462" class="diag-arrow-dim"/>
+
+  <!-- ===== Right: I/O Buffer ===== -->
+  <rect x="610" y="60" width="100" height="453" class="diag-box" rx="6"/>
+  <text x="660" y="90" class="diag-text-bold">I/O Buffer</text>
+  <text x="660" y="110" class="diag-text-sm">输入/输出</text>
+  <text x="660" y="140" class="diag-text-sm">缓冲器</text>
+  <line x1="595" y1="250" x2="610" y2="250" class="diag-arrow-dim"/>
+  <text x="660" y="270" class="diag-text-sm">→ DQ[31:0]</text>
+
+  <!-- ===== Top: Address input ===== -->
+  <rect x="260" y="4" width="180" height="32" class="diag-box-accent" rx="6"/>
+  <text x="350" y="24" class="diag-text-bold">Address Bus  A[13:0]</text>
+
+  <line x1="350" y1="36" x2="52" y2="57" class="diag-arrow"/>
+  <text x="200" y="48" class="diag-text-sm">高8位</text>
+  <line x1="350" y1="36" x2="350" y2="57" class="diag-arrow-dim"/>
+  <text x="360" y="48" class="diag-text-sm">低6位 → Column</text>
+
+  <!-- Annotations -->
+  <text x="68" y="250" text-anchor="middle" font-size="8" font-family="Inter, sans-serif" fill="var(--accent)" font-weight="600">选中</text>
+  <text x="68" y="262" text-anchor="middle" font-size="8" font-family="Inter, sans-serif" fill="var(--accent)" font-weight="600">WL₀</text>
+
+  <!-- Sense amp detail zoom circle -->
+  <text x="350" y="310" class="diag-text-sm">▼ 灵敏放大器放大 ▼</text>
+</svg>
+</div>
+
+<h2>五层结构逐层拆解</h2>
+
+<h3>第 1 层：6T 存储单元</h3>
+
+<p>六个晶体管分两组：</p>
+<ul>
+  <li><strong>4 个晶体管</strong>构成一对交叉耦合反相器（锁存器），两个稳定状态代表 0 和 1——这是"记忆"的物理本质</li>
+  <li><strong>2 个晶体管</strong>是访问管（Access Transistor），栅极接字线 WL，源漏连接位线 BL 和内部存储节点</li>
+</ul>
+
+<p>平时访问管关闭（WL 低电平），存储节点悬空，但交叉耦合反相器的正反馈让状态保持稳定。读/写时 WL 拉高，访问管打开，<strong>存储节点才与外部位线连通</strong>。</p>
+
+<h3>第 2 层：字线 (Word Line)</h3>
+
+<p>同一根 WL 连接<strong>一整行</strong>所有单元（比如 1024 个）的访问管栅极。WL 拉高 → 整行单元的访问管同时打开 → 这一行所有 bit 同时暴露到各自的位线上。一次激活读出一整行。</p>
+
+<p>选中哪一行？由 <strong>Row Decoder（行译码器）</strong> 根据地址高位决定：n 位地址 → 2ⁿ 根 WL 中选中 1 根。256 行 = 8 位行地址。</p>
+
+<h3>第 3 层：差分位线对 (BL / BL̅)</h3>
+
+<p>每一列有一对位线：BL（真）和 BL̅（互补）。这是 SRAM 设计的关键——<strong>差分信号</strong>。</p>
+
+<div class="callout">
+  <div class="callout-title">🔑 为什么用差分？</div>
+  <p>6T 单元的两个存储节点 Q 和 Q̅ <strong>天然互补</strong>（一个高电平另一个就一定低电平）。读操作时，Q 和 Q̅ 分别拉 BL 和 BL̅ 朝相反方向摆动——差分电压摆幅是单端的两倍，且对外部共模噪声天然免疫。灵敏放大器只需要判断"哪边更高"，不需要知道绝对值。</p>
+</div>
+
+<h3>第 4 层：Column Mux（列多路选择器）</h3>
+
+<p>读出整行（比如 1024 bit）后，不需要全部输出——用 Column Decoder 根据地址低位，从 1024 列中选出 32 列（或 16/64 列，取决于 I/O 宽度），送给灵敏放大器。</p>
+
+<p>这 32 路数据并行地被 Sense Amp 放大。</p>
+
+<h3>第 5 层：灵敏放大器 (Sense Amplifier)</h3>
+
+<p><strong>这是 SRAM 读取速度的核心。</strong></p>
+
+<div class="signal-chain">
+  <div class="signal-block">BL/BL̅<br>初始相同<br>Vprechg</div>
+  <span class="signal-arr">→</span>
+  <div class="signal-block">WL=1<br>单元导通<br>BL偏移~50mV</div>
+  <span class="signal-arr">→</span>
+  <div class="signal-block highlight">Sense Amp<br>放大到<br>满摆幅 CMO</div>
+  <span class="signal-arr">→</span>
+  <div class="signal-block">I/O Buffer<br>驱动DQ焊盘<br>输出 0/1</div>
+</div>
+
+<p>位线有巨大的寄生电容（几百 fF），而 6T 单元的驱动能力很弱。如果等位线电压自然稳定到满摆幅，需要 <strong>好几纳秒</strong>。灵敏放大器不等——位线刚拉开 ~50mV（五十分之一伏），它就果断判定 0 还是 1，瞬间拉到满摆幅数字电平。这个"提前判定"把读取延时从纳秒级压到了亚纳秒级。</p>
+
+<h2>关键数据速记</h2>
+
+<div class="numbers-grid">
+  <div class="num-card">
+    <div class="val">6</div>
+    <div class="lbl">每单元晶体管数</div>
+  </div>
+  <div class="num-card">
+    <div class="val">~50mV</div>
+    <div class="lbl">Sense Amp触发阈值</div>
+  </div>
+  <div class="num-card">
+    <div class="val">~120F²</div>
+    <div class="lbl">6T单元面积</div>
+  </div>
+  <div class="num-card">
+    <div class="val">256–1024</div>
+    <div class="lbl">典型行列数</div>
+  </div>
+  <div class="num-card">
+    <div class="val">差分对</div>
+    <div class="lbl">BL + BL̅ 双线</div>
+  </div>
+  <div class="num-card">
+    <div class="val">几十fF</div>
+    <div class="lbl">单根位线寄生电容</div>
+  </div>
+  <div class="num-card">
+    <div class="val">8–32</div>
+    <div class="lbl">I/O宽度 (DQ)</div>
+  </div>
+  <div class="num-card">
+    <div class="val">2级译码</div>
+    <div class="lbl">Row + Column</div>
+  </div>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联课程：</strong> <a href="../lessons/0001-memory-hierarchy.html">Lesson 0001 — 存储器层次结构</a></p>
+  <p><strong>关联笔记：</strong> <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM — 术语辨析</a> · <a href="260731_F-squared.html">F² — 最小特征尺寸的含义</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>
