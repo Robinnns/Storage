@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>macOS 数字/逻辑电路绘图工具</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .tool-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 1rem;
+    align-items: start;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  @media (max-width: 550px) {
+    .tool-row { grid-template-columns: 1fr; }
+  }
+  .tool-name { font-weight: 700; font-size: 1em; }
+  .tool-meta { font-size: 0.82em; color: var(--sidenote); }
+  .tool-desc { font-size: 0.9em; line-height: 1.55; }
+  .tool-desc ul { margin: 0.3rem 0 0 1.2rem; }
+
+  .rec-badge {
+    display: inline-block;
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 0.1em 0.5em;
+    border-radius: 3px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    margin-right: 0.3em;
+  }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>macOS 数字/逻辑电路绘图工具</h1>
+<p style="color:var(--sidenote);">260801 · <span class="tag">工具</span><span class="tag">macOS</span><span class="tag">电路图</span><span class="tag">绘图</span></p>
+
+<div class="tool-row">
+  <div>
+    <div class="tool-name"><span class="rec-badge">最推荐</span>draw.io / diagrams.net</div>
+    <div class="tool-meta">免费 · 原生 macOS 桌面版 + 网页 + VS Code</div>
+  </div>
+  <div class="tool-desc">
+    拖放式矢量绘图，零学习成本。导出 SVG/PNG/PDF 嵌入笔记。
+    <ul>
+      <li>画门级电路、晶体管级电路、模块框图均胜任</li>
+      <li>桌面版离线使用：github.com/jgraph/drawio-desktop</li>
+    </ul>
+  </div>
+</div>
+
+<div class="tool-row">
+  <div>
+    <div class="tool-name">KiCad Eeschema</div>
+    <div class="tool-meta">免费开源 · macOS / Win / Linux</div>
+  </div>
+  <div class="tool-desc">
+    PCB EDA 内置的原理图编辑器，有完整 MOS 管/逻辑门/无源器件符号库。画出来的图可直接放进技术文档。
+    <ul><li>学习曲线比 draw.io 陡，但图更规范、符号更标准</li></ul>
+  </div>
+</div>
+
+<div class="tool-row">
+  <div>
+    <div class="tool-name">Excalidraw</div>
+    <div class="tool-meta">免费开源 · 网页版 + VS Code 插件</div>
+  </div>
+  <div class="tool-desc">
+    手绘风格，画草图极快。连线自动吸附。适合示意性框图、白板讨论。SVG 导出干净。
+  </div>
+</div>
+
+<div class="tool-row">
+  <div>
+    <div class="tool-name">TikZ / CircuiTikZ (LaTeX)</div>
+    <div class="tool-meta">免费开源 · 代码生成</div>
+  </div>
+  <div class="tool-desc">
+    学术论文/教科书画风。MOS 管、逻辑门全有现成宏。输出矢量 PDF。LaTeX 环境需自行搭建，学习曲线最陡。
+  </div>
+</div>
+
+<div class="tool-row">
+  <div>
+    <div class="tool-name">SchemDraw (Python)</div>
+    <div class="tool-meta">免费开源 · pip install</div>
+  </div>
+  <div class="tool-desc">
+    Python 画电路图，比 TikZ 简单。适合用代码批量生成。库不如 CircuiTikZ 全面。
+  </div>
+</div>
+
+<h2>场景速查</h2>
+
+<table>
+  <thead><tr><th>场景</th><th>推荐</th></tr></thead>
+  <tbody>
+    <tr><td>记笔记、快速画门/管级电路</td><td>draw.io</td></tr>
+    <tr><td>正规原理图（标准电气符号）</td><td>KiCad Eeschema</td></tr>
+    <tr><td>示意框图、白板讨论</td><td>Excalidraw</td></tr>
+    <tr><td>技术文档/论文配图</td><td>TikZ/CircuiTikZ</td></tr>
+  </tbody>
+</table>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260801_EDA-tools-overview.html">数字 IC 工具全景</a> · <a href="260801_CMOS-logic-gates.html">CMOS 逻辑门电路</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

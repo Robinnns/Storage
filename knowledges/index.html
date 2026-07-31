@@ -76,6 +76,38 @@ const entries = [
   // },
   {
     date: '260801',
+    file: '260801_DRAM-word-page-burst.html',
+    topic: 'DRAM 的 Word / Page / Burst — 和 C 语言 Word 对比',
+    summary: '五层抽象：WL激活读出一整行(Pag 1024-8192bit) → Column Access(4-16bit) → Burst(64-128bit) → Cache Line(512bit) → C Word(32/64bit)。每层的"一次读出"含义完全不同。',
+    tags: ['DRAM', 'Row Buffer', 'Burst', 'Cache Line', 'Wordline'],
+    related: {}
+  },
+  {
+    date: '260801',
+    file: '260801_latch-ff-register-cache.html',
+    topic: '锁存器·触发器·寄存器·缓存 — 关系与内部结构',
+    summary: '包含链：2×锁存器(电平敏感~12T)→触发器(边沿触发~24T)×N→寄存器(DFF阵列)。缓存走另一条路——SRAM 6T阵列，不是DFF。四者对比总表 + SVG内部结构图。',
+    tags: ['锁存器', '触发器', '寄存器', 'Cache', 'SRAM', 'DFF', '体系结构'],
+    related: {}
+  },
+  {
+    date: '260801',
+    file: '260801_macOS-circuit-drawing-tools.html',
+    topic: 'macOS 数字/逻辑电路绘图工具',
+    summary: 'draw.io（最推荐，拖放式零门槛）、KiCad Eeschema（正规原理图）、Excalidraw（手绘风草图）、TikZ/CircuiTikZ（论文级画质）、SchemDraw（Python方案）。按场景速查。',
+    tags: ['工具', 'macOS', '电路图', '绘图', 'draw.io'],
+    related: {}
+  },
+  {
+    date: '260801',
+    file: '260801_CMOS-logic-gates.html',
+    topic: 'CMOS 常见逻辑门电路（附晶体管数）',
+    summary: '反相器(2T)、传输门(2T)、NAND2(4T)、NOR2(4T)、AND2(6T)、OR2(6T)、XOR(6-12T)、MUX2:1(6-10T)、钟控反相器(4T)、三态缓冲器(6-8T)、AOI/OAI(6-10T)。带SVG电路图。核心结论：AND比NAND贵、NAND2是数字CMOS最重要的门。',
+    tags: ['CMOS', '逻辑门', 'NAND', 'NOR', '晶体管数', '标准单元'],
+    related: {}
+  },
+  {
+    date: '260801',
     file: '260801_EDA-tools-overview.html',
     topic: '数字 IC 工具全景：从入门到专业',
     summary: '入门级（Logisim-evolution、Digital、EDA Playground、Icarus+GTKWave）→ 专业 ASIC 工具链（VCS+Verdi、DC、PrimeTime、Innovus、Calibre）。按设计流程排列，标注三大 EDA 厂商格局。',

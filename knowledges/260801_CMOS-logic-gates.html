@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMOS 常见逻辑门电路</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .gate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.4rem 0;
+  }
+  @media (max-width: 600px) {
+    .gate-grid { grid-template-columns: 1fr; }
+  }
+
+  .gate-card {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .gate-card .gate-head {
+    padding: 0.5rem 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .gate-card .gate-name { font-weight: 700; font-size: 1em; }
+  .gate-card .gate-tcount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    color: var(--accent);
+    font-weight: 600;
+    background: var(--accent-dim);
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+  }
+  .gate-card .gate-body {
+    padding: 0.7rem 0.9rem;
+    background: var(--bg);
+    text-align: center;
+  }
+  .gate-card .gate-body svg {
+    max-width: 100%;
+    height: auto;
+  }
+  .gate-card .gate-structure {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    background: var(--callout-bg);
+    border-top: 1px solid var(--border-light);
+    line-height: 1.4;
+  }
+
+  /* SVG colors */
+  .g-pmos { fill: #e8ecf0; stroke: var(--text-muted); stroke-width: 1.2; }
+  .g-nmos { fill: var(--surface); stroke: var(--text-muted); stroke-width: 1.2; }
+  .g-wire   { stroke: var(--text); stroke-width: 1.3; fill: none; }
+  .g-wire-a { stroke: var(--accent); stroke-width: 1.5; fill: none; }
+  .g-wire-d { stroke: var(--sidenote); stroke-width: 0.8; fill: none; }
+  .g-label  { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 10px; text-anchor: middle; }
+  .g-label-s { fill: var(--sidenote); font-family: 'Inter', sans-serif; font-size: 8px; text-anchor: middle; }
+  .g-dot { fill: var(--text); }
+  .g-vdd { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; }
+  .g-gnd { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; }
+
+  [data-theme="dark"] .g-pmos { fill: #1e2530; stroke: #8899b0; stroke-width: 1.2; }
+  [data-theme="dark"] .g-nmos { fill: #182232; stroke: #8899b0; stroke-width: 1.2; }
+
+  /* Summary table */
+  .summary-table td:first-child { font-weight: 700; white-space: nowrap; }
+  .summary-table .tier-2 { background: var(--accent-dim); }
+  .summary-table .tier-4 { background: var(--surface); }
+  .summary-table .tier-6 { background: var(--callout-bg); }
+
+  .principle-callout {
+    background: var(--accent-dim);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1.5rem 0;
+  }
+  .principle-callout h3 { margin: 0 0 0.5rem; color: var(--accent); }
+  .principle-callout p { margin: 0.3rem 0; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>CMOS 常见逻辑门电路</h1>
+<p style="color:var(--sidenote);">260801 · <span class="tag">CMOS</span><span class="tag">逻辑门</span><span class="tag">晶体管</span><span class="tag">数字电路</span></p>
+
+<div class="principle-callout">
+  <h3>🔑 CMOS 设计原则（记住这四条就够）</h3>
+  <p>① <strong>PMOS 管做上拉网络</strong>（连 VDD），<strong>NMOS 管做下拉网络</strong>（连 GND）。</p>
+  <p>② 上拉和下拉网络<strong>互补</strong>——稳态时不会同时导通，静态功耗为零（理想情况下）。</p>
+  <p>③ PMOS 串联 → 等效于 NMOS 并联（互补）。所以 NAND 的上拉是 PMOS 并联、下拉是 NMOS 串联；NOR 反过来。</p>
+  <p>④ <strong>串联削弱驱动</strong>——N 个管串联，等效驱动能力 ≈ 单管的 1/N。所以多输入门通常不超过 4 输入。</p>
+</div>
+
+<h2>2 晶体管级</h2>
+
+<div class="gate-grid">
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">反相器 (NOT / Inverter)</span><span class="gate-tcount">2T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- VDD -->
+        <line x1="120" y1="12" x2="140" y2="12" class="g-wire"/>
+        <text x="90" y="16" class="g-vdd">VDD</text>
+        <!-- PMOS -->
+        <line x1="130" y1="20" x2="130" y2="12" class="g-wire"/>
+        <rect x="110" y="20" width="40" height="38" rx="2" class="g-pmos"/>
+        <line x1="120" y1="40" x2="130" y2="38" class="g-wire"/>
+        <text x="85" y="42" class="g-label-s">PMOS</text>
+        <text x="85" y="52" class="g-label-s">上管</text>
+        <!-- Gate -->
+        <circle cx="130" cy="38" r="2" class="g-dot"/>
+        <!-- Output Y -->
+        <line x1="130" y1="58" x2="130" y2="72" class="g-wire"/>
+        <circle cx="130" cy="72" r="3" class="g-dot"/>
+        <text x="150" y="76" class="g-label">Y = A̅</text>
+        <!-- NMOS -->
+        <line x1="130" y1="78" x2="130" y2="82" class="g-wire"/>
+        <rect x="110" y="82" width="40" height="38" rx="2" class="g-nmos"/>
+        <circle cx="130" cy="100" r="2" class="g-dot"/>
+        <text x="155" y="104" class="g-label-s">NMOS 下管</text>
+        <!-- GND -->
+        <line x1="120" y1="120" x2="140" y2="120" class="g-wire"/>
+        <text x="90" y="124" class="g-gnd">GND</text>
+        <!-- Input A gate connection -->
+        <line x1="130" y1="38" x2="130" y2="100" class="g-wire-a" stroke-dasharray="4 3"/>
+        <line x1="40" y1="68" x2="110" y2="38" class="g-wire"/>
+        <text x="25" y="72" class="g-label">A</text>
+        <!-- Truth table -->
+        <rect x="210" y="35" width="45" height="30" rx="3" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="232" y="50" class="g-label-s" text-anchor="middle">A=0→Y=1</text>
+        <text x="232" y="60" class="g-label-s" text-anchor="middle">A=1→Y=0</text>
+      </svg>
+    </div>
+    <div class="gate-structure">1 PMOS（上拉）+ 1 NMOS（下拉），栅极共接 A。A=1 → NMOS 导通 → Y 拉到 GND。A=0 → PMOS 导通 → Y 拉到 VDD。</div>
+  </div>
+
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">传输门 (Transmission Gate)</span><span class="gate-tcount">2T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
+        <text x="30" y="58" class="g-label">IN</text>
+        <line x1="45" y1="54" x2="75" y2="54" class="g-wire"/>
+        <!-- NMOS -->
+        <rect x="75" y="38" width="36" height="32" rx="2" class="g-nmos"/>
+        <line x1="93" y1="38" x2="93" y2="22" class="g-wire-a"/>
+        <text x="88" y="18" class="g-label-s">CK</text>
+        <!-- Short NMOS S/D -->
+        <line x1="75" y1="54" x2="75" y2="38" class="g-wire"/>
+        <line x1="111" y1="54" x2="111" y2="38" class="g-wire"/>
+        <!-- PMOS (parallel, above) -->
+        <rect x="75" y="28" width="36" height="10" rx="2" class="g-pmos"/>
+        <line x1="93" y1="38" x2="93" y2="28" class="g-wire"/>
+        <circle cx="93" cy="22" r="4" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="108" y="18" class="g-label-s">CK</text>
+        <!-- Short PMOS S/D -->
+        <line x1="75" y1="54" x2="85" y2="33" class="g-wire-d"/>
+        <line x1="111" y1="54" x2="102" y2="33" class="g-wire-d"/>
+        <!-- Output -->
+        <line x1="111" y1="54" x2="140" y2="54" class="g-wire"/>
+        <text x="155" y="58" class="g-label">OUT</text>
+        <!-- Explanation -->
+        <rect x="175" y="30" width="80" height="60" rx="4" fill="var(--callout-bg)" stroke="var(--callout-border)"/>
+        <text x="215" y="48" class="g-label-s" text-anchor="middle">CK=1: 两管</text>
+        <text x="215" y="60" class="g-label-s" text-anchor="middle">同时导通</text>
+        <text x="215" y="72" class="g-label-s" text-anchor="middle">全摆幅通过</text>
+        <text x="215" y="84" class="g-label-s" text-anchor="middle">CK=0: 高阻</text>
+      </svg>
+    </div>
+    <div class="gate-structure">1 NMOS + 1 PMOS 并联。CK=1 时两管都导通（各擅胜场——NMOS 传低电平好，PMOS 传高电平好），CK=0 时都关断。CMOS 版的模拟开关。</div>
+  </div>
+</div>
+
+<h2>4 晶体管级</h2>
+
+<div class="gate-grid">
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">NAND2（二输入与非）</span><span class="gate-tcount">4T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- VDD -->
+        <line x1="100" y1="8" x2="160" y2="8" class="g-wire"/>
+        <text x="70" y="12" class="g-vdd">VDD</text>
+        <!-- PMOS in parallel -->
+        <rect x="105" y="16" width="24" height="28" rx="2" class="g-pmos"/>
+        <rect x="135" y="16" width="24" height="28" rx="2" class="g-pmos"/>
+        <line x1="117" y1="16" x2="117" y2="8" class="g-wire"/>
+        <line x1="147" y1="16" x2="147" y2="8" class="g-wire"/>
+        <line x1="105" y1="30" x2="165" y2="30" class="g-wire"/>
+        <!-- Gate inputs A, B -->
+        <line x1="117" y1="16" x2="80" y2="30" class="g-wire-a"/>
+        <text x="75" y="40" class="g-label-s">A</text>
+        <line x1="147" y1="16" x2="170" y2="30" class="g-wire-a"/>
+        <text x="175" y="40" class="g-label-s">B</text>
+        <!-- Output Y -->
+        <line x1="135" y1="44" x2="135" y2="56" class="g-wire"/>
+        <circle cx="135" cy="56" r="3" class="g-dot"/>
+        <text x="155" y="60" class="g-label">Y = A·B</text>
+        <!-- NMOS in series -->
+        <rect x="120" y="64" width="20" height="24" rx="2" class="g-nmos"/>
+        <rect x="120" y="92" width="20" height="24" rx="2" class="g-nmos"/>
+        <line x1="130" y1="64" x2="130" y2="56" class="g-wire"/>
+        <line x1="120" y1="76" x2="140" y2="76" class="g-wire"/>
+        <line x1="120" y1="104" x2="140" y2="104" class="g-wire"/>
+        <!-- Gate A, B for NMOS -->
+        <line x1="130" y1="76" x2="100" y2="85" class="g-wire-a"/>
+        <line x1="130" y1="104" x2="100" y2="100" class="g-wire-a"/>
+        <!-- GND -->
+        <line x1="100" y1="120" x2="160" y2="120" class="g-wire"/>
+        <text x="70" y="124" class="g-gnd">GND</text>
+        <!-- Truth table -->
+        <rect x="195" y="30" width="60" height="65" rx="3" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="225" y="45" class="g-label-s" text-anchor="middle">AB=00 → Y=1</text>
+        <text x="225" y="57" class="g-label-s" text-anchor="middle">AB=01 → Y=1</text>
+        <text x="225" y="69" class="g-label-s" text-anchor="middle">AB=10 → Y=1</text>
+        <text x="225" y="81" class="g-label-s" text-anchor="middle">AB=11 → Y=0</text>
+        <text x="225" y="93" class="g-label-s" text-anchor="middle">上并下串</text>
+      </svg>
+    </div>
+    <div class="gate-structure"><strong>上拉：2 PMOS 并联</strong>（只要有一个输入为 0，Y 就能上拉到 VDD）。<strong>下拉：2 NMOS 串联</strong>（只有两个输入都为 1，Y 才拉到 GND）。PMOS 并/NMOS 串 → NAND 逻辑。</div>
+  </div>
+
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">NOR2（二输入或非）</span><span class="gate-tcount">4T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- VDD -->
+        <line x1="100" y1="8" x2="160" y2="8" class="g-wire"/>
+        <text x="70" y="12" class="g-vdd">VDD</text>
+        <!-- PMOS in SERIES -->
+        <rect x="115" y="16" width="20" height="24" rx="2" class="g-pmos"/>
+        <rect x="115" y="44" width="20" height="24" rx="2" class="g-pmos"/>
+        <line x1="125" y1="16" x2="125" y2="8" class="g-wire"/>
+        <line x1="115" y1="28" x2="135" y2="28" class="g-wire"/>
+        <line x1="115" y1="56" x2="135" y2="56" class="g-wire"/>
+        <!-- Gate A, B for PMOS -->
+        <line x1="125" y1="28" x2="170" y2="20" class="g-wire-a"/>
+        <text x="175" y="22" class="g-label-s">A</text>
+        <line x1="125" y1="56" x2="170" y2="52" class="g-wire-a"/>
+        <text x="175" y="54" class="g-label-s">B</text>
+        <!-- Output Y -->
+        <line x1="125" y1="68" x2="125" y2="82" class="g-wire"/>
+        <circle cx="125" cy="82" r="3" class="g-dot"/>
+        <text x="145" y="86" class="g-label">Y = A+B</text>
+        <!-- NMOS in PARALLEL -->
+        <rect x="108" y="92" width="24" height="28" rx="2" class="g-nmos"/>
+        <rect x="138" y="92" width="24" height="28" rx="2" class="g-nmos"/>
+        <line x1="120" y1="92" x2="120" y2="82" class="g-wire"/>
+        <line x1="150" y1="92" x2="150" y2="82" class="g-wire"/>
+        <line x1="108" y1="106" x2="168" y2="106" class="g-wire"/>
+        <!-- Gate A, B for NMOS -->
+        <line x1="120" y1="106" x2="90" y2="115" class="g-wire-a"/>
+        <line x1="150" y1="106" x2="180" y2="115" class="g-wire-a"/>
+        <!-- GND -->
+        <line x1="100" y1="120" x2="160" y2="120" class="g-wire"/>
+        <text x="70" y="124" class="g-gnd">GND</text>
+        <!-- Truth table -->
+        <rect x="195" y="30" width="60" height="65" rx="3" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="225" y="45" class="g-label-s" text-anchor="middle">AB=00 → Y=1</text>
+        <text x="225" y="57" class="g-label-s" text-anchor="middle">AB=01 → Y=0</text>
+        <text x="225" y="69" class="g-label-s" text-anchor="middle">AB=10 → Y=0</text>
+        <text x="225" y="81" class="g-label-s" text-anchor="middle">AB=11 → Y=0</text>
+        <text x="225" y="93" class="g-label-s" text-anchor="middle">上串下并</text>
+      </svg>
+    </div>
+    <div class="gate-structure">和 NAND 完全对称但反过来——<strong>上拉：2 PMOS 串联</strong>（两个输入都为 0 才拉 Y 到 VDD）。<strong>下拉：2 NMOS 并联</strong>（任意一个为 1，Y 就拉到 GND）。PMOS 串/NMOS 并 → NOR 逻辑。</div>
+  </div>
+</div>
+
+<h2>6 晶体管级</h2>
+
+<div class="gate-grid">
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">AND2（与门）</span><span class="gate-tcount">6T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 80" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="20" width="60" height="36" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="55" y="42" class="g-label">NAND2</text>
+        <text x="55" y="52" class="g-label-s">4T</text>
+        <line x1="85" y1="38" x2="105" y2="38" class="g-wire"/>
+        <circle cx="115" cy="38" r="16" fill="var(--surface)" stroke="var(--text)" stroke-width="1.3"/>
+        <text x="115" y="42" class="g-label">INV</text>
+        <text x="115" y="52" class="g-label-s">2T</text>
+        <line x1="131" y1="38" x2="155" y2="38" class="g-wire"/>
+        <text x="170" y="42" class="g-label">Y = A·B</text>
+        <!-- Labels -->
+        <line x1="5" y1="30" x2="20" y2="38" class="g-wire"/>
+        <text x="55" y="10" class="g-label-s">A, B</text>
+      </svg>
+    </div>
+    <div class="gate-structure">NAND2（4T）+ 反相器（2T）= 6T。在 CMOS 中，<strong>AND 比 NAND 贵一半</strong>——纯性能敏感的关键路径上，设计师会用 NAND + 反相器等效替代 AND 来减少晶体管。</div>
+  </div>
+
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">OR2（或门）</span><span class="gate-tcount">6T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 80" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="20" width="60" height="36" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+        <text x="55" y="42" class="g-label">NOR2</text>
+        <text x="55" y="52" class="g-label-s">4T</text>
+        <line x1="85" y1="38" x2="105" y2="38" class="g-wire"/>
+        <circle cx="115" cy="38" r="16" fill="var(--surface)" stroke="var(--text)" stroke-width="1.3"/>
+        <text x="115" y="42" class="g-label">INV</text>
+        <text x="115" y="52" class="g-label-s">2T</text>
+        <line x1="131" y1="38" x2="155" y2="38" class="g-wire"/>
+        <text x="170" y="42" class="g-label">Y = A+B</text>
+      </svg>
+    </div>
+    <div class="gate-structure">NOR2（4T）+ 反相器（2T）= 6T。同理，OR 比 NOR 贵一半。通用原则：<strong>带"非"的门（NAND、NOR、NOT）比不带"非"的（AND、OR）晶体管更少</strong>。</div>
+  </div>
+
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">XOR2（异或门）</span><span class="gate-tcount">6–12T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 80" xmlns="http://www.w3.org/2000/svg">
+        <text x="20" y="36" class="g-label-s">A</text>
+        <line x1="25" y1="32" x2="45" y2="32" class="g-wire"/>
+        <circle cx="48" cy="32" r="2" fill="var(--accent)"/>
+        <!-- Transmission gate mux style -->
+        <rect x="52" y="18" width="70" height="40" rx="4" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="87" y="35" class="g-label-s">TG+MUX</text>
+        <text x="87" y="50" class="g-label-s" font-size="7">或 NAND树</text>
+        <line x1="122" y1="38" x2="145" y2="38" class="g-wire"/>
+        <text x="160" y="42" class="g-label">Y = A⊕B</text>
+        <!-- XNOR variation -->
+        <rect x="185" y="18" width="70" height="40" rx="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="220" y="42" class="g-label">XNOR</text>
+        <text x="220" y="52" class="g-label-s">6-12T</text>
+      </svg>
+    </div>
+    <div class="gate-structure">多种实现方式。最省管子的方案（6T）用传输门做：A⊕B = A·B̅ + A̅·B，用传输门选通。另一种经典方案用 4 个 NAND2（16T，但 NAND 可共用）。<strong>XNOR 同理，只是末尾不接反相器。</strong></div>
+  </div>
+
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">MUX 2:1（二选一选择器）</span><span class="gate-tcount">6–10T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 100" xmlns="http://www.w3.org/2000/svg">
+        <text x="25" y="30" class="g-label-s">I₀</text>
+        <text x="25" y="56" class="g-label-s">I₁</text>
+        <line x1="35" y1="26" x2="55" y2="26" class="g-wire"/>
+        <line x1="35" y1="52" x2="55" y2="52" class="g-wire"/>
+        <!-- Two TGs -->
+        <rect x="55" y="16" width="36" height="16" rx="2" fill="var(--accent-dim)" stroke="var(--accent)"/>
+        <text x="73" y="27" class="g-label-s">TG</text>
+        <rect x="55" y="42" width="36" height="16" rx="2" fill="var(--accent-dim)" stroke="var(--accent)"/>
+        <text x="73" y="53" class="g-label-s">TG</text>
+        <line x1="91" y1="24" x2="110" y2="24" class="g-wire"/>
+        <line x1="91" y1="50" x2="110" y2="50" class="g-wire"/>
+        <circle cx="110" cy="37" r="3" class="g-dot"/>
+        <line x1="113" y1="37" x2="135" y2="37" class="g-wire"/>
+        <text x="150" y="41" class="g-label">Y</text>
+        <!-- Select -->
+        <line x1="95" y1="12" x2="95" y2="6" class="g-wire-a"/>
+        <text x="88" y="5" class="g-label-s">S</text>
+        <circle cx="73" cy="10" r="4" fill="var(--bg)" stroke="var(--accent)"/>
+        <!-- Note -->
+        <rect x="185" y="25" width="70" height="40" rx="3" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="220" y="40" class="g-label-s" text-anchor="middle">S=0 → Y=I₀</text>
+        <text x="220" y="52" class="g-label-s" text-anchor="middle">S=1 → Y=I₁</text>
+        <text x="220" y="62" class="g-label-s" text-anchor="middle">~6-10T</text>
+      </svg>
+    </div>
+    <div class="gate-structure">最简实现：2 个传输门（各 2T）+ 1 个反相器产生 S̅（2T）= 6T。纯门级实现：Y = I₀·S̅ + I₁·S = 两个 AND2（6T×2）+ 一个 OR2（6T）= 18T，太贵。所以实际用传输门方案。</div>
+  </div>
+</div>
+
+<h2>多输入门</h2>
+
+<div class="gate-grid">
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">NAND3 / NAND4</span><span class="gate-tcount">6T / 8T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
+        <text x="30" y="28" class="g-label-s">NAND3:</text>
+        <text x="85" y="28" class="g-label-s">上拉 3 PMOS 并联</text>
+        <text x="85" y="40" class="g-label-s">下拉 3 NMOS 串联</text>
+        <text x="85" y="52" class="g-label-s">6T  ·  驱动强度 ≈ 单管 1/3</text>
+      </svg>
+    </div>
+    <div class="gate-structure">每增加一个输入 → 加 1 个 PMOS（并联）+ 1 个 NMOS（串联）= +2T。NAND3 = 6T，NAND4 = 8T。但串联管越多下拉越弱——<strong>通常不超过 4 输入</strong>。</div>
+  </div>
+
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">AOI / OAI 复合门</span><span class="gate-tcount">6–10T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg">
+        <text x="30" y="25" class="g-label-s">AOI21:</text>
+        <text x="85" y="25" class="g-label-s">Y = (A·B + C)̅</text>
+        <text x="85" y="40" class="g-label-s">6T — 和 NAND3 一样多!</text>
+        <text x="85" y="55" class="g-label-s">OAI21: Y = (A+B)·C̅</text>
+      </svg>
+    </div>
+    <div class="gate-structure">AOI = And-Or-Invert，OAI = Or-And-Invert。把两级门（AND+OR+INV）压缩成一个复杂门 —— 省晶体管 + 省延迟。标准单元库里最常见的复杂门，Synopsys DC 综合时大量使用。</div>
+  </div>
+</div>
+
+<h2>三态门和钟控门</h2>
+
+<div class="gate-grid">
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">Tri-state Buffer（三态缓冲器）</span><span class="gate-tcount">6–8T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 80" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="15" width="70" height="50" rx="4" fill="var(--surface)" stroke="var(--accent)"/>
+        <text x="60" y="32" class="g-label">EN 控制</text>
+        <text x="60" y="48" class="g-label-s">上拉+下拉</text>
+        <text x="60" y="60" class="g-label-s">使能/禁能</text>
+        <line x1="95" y1="40" x2="115" y2="40" class="g-wire"/>
+        <text x="130" y="44" class="g-label">Y</text>
+        <rect x="160" y="20" width="95" height="40" rx="3" fill="var(--callout-bg)" stroke="var(--callout-border)"/>
+        <text x="207" y="35" class="g-label-s" text-anchor="middle">EN=1 → Y=A</text>
+        <text x="207" y="48" class="g-label-s" text-anchor="middle">EN=0 → Y=Z (高阻)</text>
+      </svg>
+    </div>
+    <div class="gate-structure">反相器 + 传输门 + 使能控制 = ~6T。或多一层使能级（钟控反相器）≈ 8T。功能：EN=1 时 Y=A（正常驱动），EN=0 时 Y 高阻（相当于断开）。多驱动源共享一根总线时必需。</div>
+  </div>
+
+  <div class="gate-card">
+    <div class="gate-head"><span class="gate-name">钟控反相器 (Clocked Inverter)</span><span class="gate-tcount">4T</span></div>
+    <div class="gate-body">
+      <svg viewBox="0 0 260 80" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="15" width="90" height="50" rx="4" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="70" y="30" class="g-label-s">基本反相器</text>
+        <text x="70" y="44" class="g-label-s">上下各串一个</text>
+        <text x="70" y="58" class="g-label-s">钟控管 (CK/CK̅)</text>
+        <line x1="115" y1="40" x2="135" y2="40" class="g-wire"/>
+        <text x="150" y="44" class="g-label">4T</text>
+        <rect x="175" y="20" width="80" height="40" rx="3" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="215" y="35" class="g-label-s" text-anchor="middle">CK=1→反相</text>
+        <text x="215" y="48" class="g-label-s" text-anchor="middle">CK=0→高阻</text>
+      </svg>
+    </div>
+    <div class="gate-structure">在反相器基础上串一对钟控管。C²MOS 锁存器和触发器的核心构件。DFF 笔记中的 C²MOS 结构就是两个这种反相器 + 反馈环。</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>总表：按晶体管数排序</h2>
+<!-- ============================================================ -->
+
+<table class="summary-table">
+  <thead>
+    <tr><th>晶体管数</th><th>逻辑门</th><th>结构特征</th><th>备注</th></tr>
+  </thead>
+  <tbody>
+    <tr class="tier-2">
+      <td><strong>2T</strong></td>
+      <td>反相器 (NOT)</td><td>1 PMOS + 1 NMOS</td><td>最简 CMOS 门</td>
+    </tr>
+    <tr class="tier-2">
+      <td><strong>2T</strong></td>
+      <td>传输门 (TG)</td><td>1 PMOS + 1 NMOS 并联</td><td>CMOS 模拟开关</td>
+    </tr>
+    <tr class="tier-4">
+      <td><strong>4T</strong></td>
+      <td>NAND2</td><td>2 PMOS 并 + 2 NMOS 串</td><td>数字设计中最常用的门</td>
+    </tr>
+    <tr class="tier-4">
+      <td><strong>4T</strong></td>
+      <td>NOR2</td><td>2 PMOS 串 + 2 NMOS 并</td><td>和 NAND 对称</td>
+    </tr>
+    <tr class="tier-4">
+      <td><strong>4T</strong></td>
+      <td>钟控反相器</td><td>反相器 + 2 钟控管</td><td>锁存器核心构件</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>6T</strong></td>
+      <td>AND2</td><td>NAND2 + INV</td><td>比 NAND 贵 50%</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>6T</strong></td>
+      <td>OR2</td><td>NOR2 + INV</td><td>比 NOR 贵 50%</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>6T</strong></td>
+      <td>XOR2 (最简)</td><td>传输门实现</td><td>TG+MUX 方案</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>6T</strong></td>
+      <td>MUX 2:1 (最简)</td><td>2×TG + INV</td><td>传输门选通方案</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>6T</strong></td>
+      <td>AOI21</td><td>(A·B + C)̅</td><td>复合门，省管省延迟</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>6T</strong></td>
+      <td>NAND3</td><td>3 PMOS 并 + 3 NMOS 串</td><td>驱动强度 ~1/3</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>6–8T</strong></td>
+      <td>Tri-state Buffer</td><td>INV+TG+EN 控制</td><td>总线驱动</td>
+    </tr>
+    <tr class="tier-6">
+      <td><strong>8T</strong></td>
+      <td>NAND4</td><td>4 PMOS 并 + 4 NMOS 串</td><td>多输入门通常< 5 输入</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">💡 两个反直觉的结论</div>
+  <ol style="margin:0.3rem 0;">
+    <li><strong>AND 比 NAND 贵、OR 比 NOR 贵。</strong>逻辑上 AND 更直观（"同时为1才1"），但 CMOS 物理上 NAND 更自然（并联 PMOS + 串联 NMOS）。所以标准库里 NAND 是基础、AND 是 NAND+INV 的"拼装货"。</li>
+    <li><strong>NAND2 是数字 CMOS 中最重要的门。</strong>任何布尔函数都能只用 NAND2 实现（功能完备性），且 4T 是性价比最优的点。这就是为什么 Flash 存储译码器中大量使用 NAND 结构。</li>
+  </ol>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_latch-flipflop-transistor.html">锁存器与触发器的晶体管级结构</a> · <a href="260801_DFF-structures.html">DFF 的五种主要结构</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

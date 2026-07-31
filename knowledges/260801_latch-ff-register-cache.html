@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>锁存器·触发器·寄存器·缓存 — 关系与结构</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .comp-chain {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+    justify-content: center;
+  }
+  .comp-node {
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid;
+  }
+  .comp-node .cn-title { font-weight: 700; font-size: 0.95em; }
+  .comp-node .cn-sub   { font-size: 0.78em; margin-top: 0.15em; }
+  .node-latch  { border-color: #e6a817; background: #fef9ee; }
+  .node-ff     { border-color: #d97706; background: #fef6e8; }
+  .node-reg    { border-color: var(--accent); background: var(--accent-dim); }
+  .node-cache  { border-color: #16a34a; background: #e6f4ec; }
+  .comp-arrow {
+    font-size: 1.5em;
+    color: var(--sidenote);
+    font-weight: 700;
+  }
+  [data-theme="dark"] .node-latch { background: #2d2410; }
+  [data-theme="dark"] .node-ff    { background: #2d2010; }
+  [data-theme="dark"] .node-cache { background: #14261e; }
+
+  .struct-card {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    margin: 1.4rem 0;
+    overflow: hidden;
+  }
+  .struct-card .card-head {
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    font-size: 0.92em;
+  }
+  .struct-card .card-body {
+    padding: 1rem 1.2rem;
+    font-size: 0.9em;
+    line-height: 1.6;
+  }
+  .struct-card .card-body ul { margin: 0.3rem 0 0 1.2rem; }
+
+  .head-latch  { background: #fef9ee; color: #8a6d14; }
+  .head-ff     { background: #fef6e8; color: #a0520a; }
+  .head-reg    { background: var(--accent-dim); color: var(--accent); }
+  .head-cache  { background: #e6f4ec; color: #166534; }
+
+  /* Containment diagram */
+  .contain-diagram {
+    margin: 1.5rem 0;
+    font-size: 0.85em;
+  }
+  .contain-diagram svg { max-width: 100%; height: auto; }
+
+  .compare-table td:first-child { font-weight: 650; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>锁存器·触发器·寄存器·缓存 — 关系与内部结构</h1>
+<p style="color:var(--sidenote);">260801 · <span class="tag">锁存器</span><span class="tag">触发器</span><span class="tag">寄存器</span><span class="tag">缓存</span><span class="tag">SRAM</span><span class="tag">体系结构</span></p>
+
+<h2>一句话说清四者关系</h2>
+
+<div class="comp-chain">
+  <div class="comp-node node-latch">
+    <div class="cn-title">🔓 锁存器</div>
+    <div class="cn-sub">电平敏感 · ~12T</div>
+  </div>
+  <span class="comp-arrow">×2 →</span>
+  <div class="comp-node node-ff">
+    <div class="cn-title">🔒 D 触发器</div>
+    <div class="cn-sub">边沿触发 · ~24T</div>
+  </div>
+  <span class="comp-arrow">×N →</span>
+  <div class="comp-node node-reg">
+    <div class="cn-title">📦 寄存器</div>
+    <div class="cn-sub">N-bit 存储 · N×24T</div>
+  </div>
+</div>
+
+<div class="comp-chain" style="margin-top:0.2rem;">
+  <div class="comp-node node-cache">
+    <div class="cn-title">💾 Cache（缓存）</div>
+    <div class="cn-sub"><strong>不是用 DFF 搭的！</strong></div>
+    <div class="cn-sub">用 SRAM 阵列 (6T/cell)</div>
+  </div>
+</div>
+
+<div class="callout">
+  <div class="callout-title">🔑 核心认知</div>
+  <p><strong>锁存器 → 触发器 → 寄存器</strong>是一条包含链：锁存器是原子构件，两个锁存器拼成触发器，N 个触发器并排成寄存器。</p>
+  <p><strong>缓存</strong>是另一条路：用 SRAM 阵列（6T 单元），和寄存器走完全不同的物理实现。缓存 ≠ 一堆触发器。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>一、锁存器 (Latch) — 原子构件</h2>
+<!-- ============================================================ -->
+
+<div class="struct-card">
+  <div class="card-head head-latch">D 锁存器内部结构 · ~10–12 个晶体管</div>
+  <div class="card-body">
+    <p><strong>内核：</strong>1 个传输门（2T）+ 2 个反相器（各 2T）构成正反馈环 + 时钟控制电路（产生 CK/CK̅，~4T）。</p>
+    <p><strong>工作方式：</strong></p>
+    <ul>
+      <li>CK=1 → TG 导通 → D 直通到 Q（<strong>透明状态</strong>，像一根导线）</li>
+      <li>CK=0 → TG 断开 → 反相器对形成正反馈环，锁住 Q 值（<strong>锁存状态</strong>）</li>
+    </ul>
+    <p><strong>缺点：</strong>CK=1 期间 D 的任何跳变都会传到 Q——在同步数字系统中这是个灾难，因为组合逻辑的毛刺会穿透锁存器。</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>二、触发器 (Flip-Flop) — 边沿触发的实现</h2>
+<!-- ============================================================ -->
+
+<div class="struct-card">
+  <div class="card-head head-ff">D 触发器内部结构 · Master-Slave · ~20–24 个晶体管</div>
+  <div class="card-body">
+    <p><strong>内核：两个 D 锁存器串联</strong>，给相反极性的时钟。</p>
+
+    <div class="contain-diagram">
+      <svg viewBox="0 0 680 140" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="var(--accent)"/>
+          </marker>
+        </defs>
+        <!-- D input -->
+        <line x1="20" y1="55" x2="55" y2="55" stroke="var(--text)" stroke-width="1.5"/>
+        <text x="12" y="50" font-size="11" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)">D</text>
+
+        <!-- Master Latch -->
+        <rect x="55" y="20" width="220" height="80" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+        <text x="165" y="42" font-size="11" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">Master Latch</text>
+        <text x="165" y="58" font-size="9" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">CK=0 时透明 (D→M)</text>
+        <text x="165" y="72" font-size="9" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">CK=1 时锁存</text>
+        <text x="165" y="88" font-size="8" font-family="Inter,sans-serif" fill="var(--text-muted)" text-anchor="middle">~12T · 传输门+反相器对</text>
+
+        <!-- M -->
+        <line x1="275" y1="55" x2="310" y2="55" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#arrow)"/>
+        <text x="292" y="48" font-size="9" font-family="Inter,sans-serif" fill="var(--accent)" text-anchor="middle">M</text>
+
+        <!-- Slave Latch -->
+        <rect x="315" y="20" width="220" height="80" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8" stroke-dasharray="6 3"/>
+        <text x="425" y="42" font-size="11" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">Slave Latch</text>
+        <text x="425" y="58" font-size="9" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">CK=1 时透明 (M→Q)</text>
+        <text x="425" y="72" font-size="9" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">CK=0 时锁存</text>
+        <text x="425" y="88" font-size="8" font-family="Inter,sans-serif" fill="var(--text-muted)" text-anchor="middle">~12T · 同结构</text>
+
+        <!-- Q output -->
+        <line x1="535" y1="55" x2="570" y2="55" stroke="var(--text)" stroke-width="1.5"/>
+        <text x="580" y="50" font-size="11" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)">Q</text>
+
+        <!-- Clock -->
+        <line x1="165" y1="10" x2="165" y2="20" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="165" y="8" font-size="9" font-family="Inter,sans-serif" fill="var(--accent)" text-anchor="middle">CK</text>
+        <line x1="425" y1="10" x2="425" y2="20" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="425" y="8" font-size="9" font-family="Inter,sans-serif" fill="var(--accent)" text-anchor="middle">CK</text>
+
+        <!-- Timing annotation -->
+        <text x="110" y="125" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">CK=0: Master透明, D→M 准备好</text>
+        <text x="360" y="125" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">↓ CK↑</text>
+        <text x="440" y="125" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">Master锁存M, Slave透明→Q</text>
+      </svg>
+    </div>
+
+    <p><strong>为什么解决了锁存器的问题？</strong>CK=0 时只有 Master 透明、Slave 锁存——D 的变化"悄悄"传到了中间节点 M，但 Q 不变。CK 上升沿瞬间，Master 锁存（M 冻结），Slave 变透明（M → Q）。<strong>从外部看，Q 只在上升沿那一刻更新。</strong>CK=1 的剩余时间里，Master 已锁存，D 的任何变化都进不来——完美挡住了毛刺。</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>三、寄存器 (Register) — DFF 的阵列化</h2>
+<!-- ============================================================ -->
+
+<div class="struct-card">
+  <div class="card-head head-reg">寄存器 / 寄存器文件 (Register File) · N 个 DFF 并联</div>
+  <div class="card-body">
+    <p><strong>1 bit 寄存器 = 1 个 DFF（~24T）。</strong>32-bit 寄存器 = 32 个 DFF 并列，共享同一时钟。</p>
+    <p><strong>CPU 中的寄存器文件（Register File）：</strong>比如 ARM 的 31 个通用寄存器（x0–x30），每个 64-bit = 31×64 = 1,984 个 DFF ≈ <strong>~47,000 个晶体管</strong>，仅寄存器文件本身就相当可观。</p>
+
+    <p>寄存器文件还包括：</p>
+    <ul>
+      <li><strong>写译码器</strong>——指令中的目标寄存器号 → 选中哪一组 DFF 的使能端</li>
+      <li><strong>读多路选择器</strong>——从所有寄存器中选出两个源寄存器（双读口），各输出到 ALU 的 A/B 端口</li>
+      <li><strong>写数据线</strong>——计算结果写回目标寄存器</li>
+    </ul>
+
+    <div class="contain-diagram">
+      <svg viewBox="0 0 680 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Write decoder -->
+        <rect x="20" y="20" width="100" height="180" rx="5" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+        <text x="70" y="48" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">写译码器</text>
+        <text x="70" y="64" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">5-bit 地址</text>
+        <text x="70" y="78" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">→ 1/31 选择</text>
+
+        <!-- DFF array -->
+        <rect x="145" y="20" width="370" height="180" rx="5" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="330" y="42" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)" text-anchor="middle">31 × 64-bit DFF 阵列</text>
+
+        <!-- Draw a few DFF rows -->
+        <rect x="160" y="52" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)" stroke-width="1"/>
+        <text x="176" y="66" font-size="8" font-family="JetBrains Mono,monospace" fill="var(--accent)" text-anchor="middle">DFF</text>
+        <rect x="196" y="52" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)" stroke-width="1"/>
+        <text x="212" y="66" font-size="8" font-family="JetBrains Mono,monospace" fill="var(--accent)" text-anchor="middle">DFF</text>
+        <rect x="232" y="52" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)" stroke-width="1"/>
+        <text x="248" y="66" font-size="8" font-family="JetBrains Mono,monospace" fill="var(--accent)" text-anchor="middle">DFF</text>
+        <text x="290" y="66" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">··· ×64 ···</text>
+        <rect x="350" y="52" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)"/>
+        <text x="366" y="66" font-size="8" font-family="JetBrains Mono,monospace" fill="var(--accent)" text-anchor="middle">DFF</text>
+
+        <text x="330" y="92" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">··· ×31 rows ···</text>
+
+        <rect x="160" y="105" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)"/>
+        <rect x="196" y="105" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)"/>
+        <rect x="232" y="105" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)"/>
+        <text x="290" y="119" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">··· ×64 ···</text>
+        <rect x="350" y="105" width="32" height="20" rx="3" fill="var(--bg)" stroke="var(--accent)"/>
+
+        <text x="330" y="160" font-size="9" font-family="Inter,sans-serif" fill="var(--accent)" text-anchor="middle">每个 .circ DFF = ~24T · 共 ~47k 晶体管</text>
+        <text x="330" y="176" font-size="9" font-family="Inter,sans-serif" fill="var(--accent)" text-anchor="middle">时钟同时打入所有 DFF</text>
+
+        <!-- Read muxes -->
+        <rect x="540" y="55" width="120" height="45" rx="5" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+        <text x="600" y="72" font-size="9" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">读 MUX A</text>
+        <text x="600" y="86" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">31:1 → Operand A</text>
+
+        <rect x="540" y="120" width="120" height="45" rx="5" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+        <text x="600" y="137" font-size="9" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">读 MUX B</text>
+        <text x="600" y="151" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">31:1 → Operand B</text>
+
+        <!-- Wires -->
+        <line x1="120" y1="110" x2="145" y2="110" stroke="var(--text)" stroke-width="1"/>
+        <line x1="515" y1="77" x2="540" y2="77" stroke="var(--text)" stroke-width="0.8"/>
+        <line x1="515" y1="142" x2="540" y2="142" stroke="var(--text)" stroke-width="0.8"/>
+
+        <text x="330" y="200" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">典型: 2 读口 + 1 写口 → 可同时读两个寄存器 + 写一个寄存器</text>
+      </svg>
+    </div>
+
+    <p><strong>为什么 CPU 寄存器这么少？</strong>每个 bit 要 24 个晶体管 + 多端口译码/MUX 开销。扩展到几万个寄存器在面积和时序上都不现实。ARM 31 个通用寄存器 + 重命名寄存器（~200 个物理寄存器）是经过精密权衡的数字。</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>四、缓存 (Cache) — 和寄存器走不同的路</h2>
+<!-- ============================================================ -->
+
+<div class="struct-card">
+  <div class="card-head head-cache">Cache 内部结构 · SRAM 6T 阵列 · 不是 DFF!</div>
+  <div class="card-body">
+    <p><strong>为什么 Cache 不用 DFF？</strong>每 bit 24T vs 6T，4 倍的差距。1MB 的 L2 Cache 如果用 DFF 实现 = 8M bits × 24T = 近 2 亿个晶体管，面积大得无法接受。用 SRAM 6T 单元，同样容量只用 ~5000 万晶体管。</p>
+
+    <p><strong>Cache 的内部组成（以 32KB L1 数据缓存为例）：</strong></p>
+    <ul>
+      <li><strong>数据阵列（Data Array）：</strong>SRAM 6T 单元阵列，存实际数据。32KB = 512 行 × 64B（每行 512 bit）</li>
+      <li><strong>标签阵列（Tag Array）：</strong>也是 SRAM——存每行的地址标签 + 有效位(V) + 脏位(D)</li>
+      <li><strong>标签比较器：</strong>地址的 Tag 部分和 Tag Array 读出的值比较——是否命中？用 XOR + AND 树实现</li>
+      <li><strong>译码器：</strong>地址的 Index 部分选中 512 行中的一行</li>
+      <li><strong>MUX / Way Selector：</strong>组相联缓存中，从 N 路中选出命中那一路的数据</li>
+    </ul>
+
+    <div class="contain-diagram">
+      <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Address input -->
+        <rect x="180" y="6" width="280" height="28" rx="4" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="320" y="24" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">物理地址: | Tag | Index | Offset |</text>
+
+        <!-- SRAM Data Array -->
+        <rect x="20" y="50" width="240" height="130" rx="5" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="140" y="72" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)" text-anchor="middle">Data Array (SRAM 6T)</text>
+        <text x="140" y="88" font-size="9" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">512 行 × 64B (512 bits/行)</text>
+        <text x="140" y="104" font-size="8" font-family="Inter,sans-serif" fill="var(--text-muted)" text-anchor="middle">Row Decoder + Sense Amps</text>
+        <text x="140" y="120" font-size="8" font-family="Inter,sans-serif" fill="var(--text-muted)" text-anchor="middle">(和 SRAM 笔记同样的结构)</text>
+        <text x="140" y="145" font-size="9" font-family="Inter,sans-serif" fill="var(--accent)" text-anchor="middle">512×512 = 256Kb = 32KB</text>
+        <text x="140" y="165" font-size="8" font-family="Inter,sans-serif" fill="var(--accent)" text-anchor="middle">≈ 1.5M 晶体管</text>
+
+        <!-- Tag Array -->
+        <rect x="290" y="50" width="200" height="130" rx="5" fill="#e6f4ec" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="390" y="72" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="#166534" text-anchor="middle">Tag Array (也是 SRAM)</text>
+        <text x="390" y="88" font-size="9" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">512 行 × Tag+V+D</text>
+        <text x="390" y="104" font-size="8" font-family="Inter,sans-serif" fill="var(--text-muted)" text-anchor="middle">同时读出 Tag</text>
+
+        <!-- Comparator -->
+        <rect x="520" y="75" width="140" height="50" rx="5" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+        <text x="590" y="95" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">比较器</text>
+        <text x="590" y="112" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">地址Tag == SRAM Tag?</text>
+
+        <!-- Hit/Miss -->
+        <rect x="520" y="140" width="140" height="30" rx="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="590" y="159" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)" text-anchor="middle">Hit / Miss → Data</text>
+
+        <!-- Wires -->
+        <line x1="260" y1="115" x2="290" y2="115" stroke="var(--text)" stroke-width="0.8"/>
+        <line x1="320" y1="34" x2="140" y2="50" stroke="var(--sidenote)" stroke-width="0.8"/>
+        <line x1="320" y1="34" x2="390" y2="50" stroke="var(--sidenote)" stroke-width="0.8"/>
+        <line x1="490" y1="100" x2="520" y2="100" stroke="var(--text)" stroke-width="0.8"/>
+
+        <text x="70" y="195" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">← 完全不同的物理实现路径 →</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>五、四者对比总表</h2>
+<!-- ============================================================ -->
+
+<table class="compare-table">
+  <thead>
+    <tr><th>维度</th><th>锁存器</th><th>触发器</th><th>寄存器(文件)</th><th>Cache</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>核心构件</td>
+      <td>传输门 + 反相器对</td>
+      <td>2 个锁存器 (M-S)</td>
+      <td>N 个 DFF 并联</td>
+      <td>SRAM 6T 阵列</td>
+    </tr>
+    <tr>
+      <td>晶体管/bit</td>
+      <td>~12T</td>
+      <td>~24T</td>
+      <td>~24T + 译码/MUX 均摊</td>
+      <td>~6T + 外围均摊</td>
+    </tr>
+    <tr>
+      <td>触发方式</td>
+      <td>电平敏感</td>
+      <td>边沿触发</td>
+      <td>边沿触发</td>
+      <td>电平敏感 (WL)</td>
+    </tr>
+    <tr>
+      <td>访问方式</td>
+      <td>CK 控制透明/锁存</td>
+      <td>CK↑ 采样</td>
+      <td>指令直接编码地址</td>
+      <td>地址总线 + 译码器</td>
+    </tr>
+    <tr>
+      <td>访问延迟</td>
+      <td>几个门延迟</td>
+      <td>Clk-to-Q</td>
+      <td>1 周期（读）</td>
+      <td>1–20 周期</td>
+    </tr>
+    <tr>
+      <td>容量范围</td>
+      <td>1 bit（单级）</td>
+      <td>1 bit</td>
+      <td>几十～几千 bit</td>
+      <td>KB–MB 级</td>
+    </tr>
+    <tr>
+      <td>典型位置</td>
+      <td>时钟门控、总线保持</td>
+      <td>流水线级边界</td>
+      <td>CPU 通用寄存器</td>
+      <td>L1/L2/L3 Cache</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">🧠 记住这一个不等式</div>
+  <p style="font-size:1.1em;text-align:center;margin:0.5rem 0;"><strong>2 个锁存器 → 1 个触发器 → N 个触发器 → 1 个寄存器</strong></p>
+  <p style="font-size:1.1em;text-align:center;margin:0.5rem 0;"><strong>Cache ≠ 一堆寄存器。Cache = SRAM 阵列，寄存器 = DFF 阵列。</strong></p>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong>
+    <a href="260731_latch-flipflop-transistor.html">锁存器与触发器的晶体管级结构</a> ·
+    <a href="260801_DFF-structures.html">DFF 的五种主要结构</a> ·
+    <a href="260731_SRAM-array-structure.html">SRAM 阵列结构详解</a> ·
+    <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM</a>
+  </p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRAM 的 Word / Page / Burst — 和 C 语言 "Word" 的对比</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 1.5rem 0;
+    font-size: 0.88em;
+  }
+  .layer-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 120px;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.6rem 0.9rem;
+    border-left: 3px solid;
+  }
+  .layer-row:nth-child(1) { border-left-color: #e0554a; background: var(--error-bg); }
+  .layer-row:nth-child(2) { border-left-color: #e6a817; }
+  .layer-row:nth-child(3) { border-left-color: #e6a817; }
+  .layer-row:nth-child(4) { border-left-color: var(--accent); background: var(--accent-dim); }
+  .layer-row:nth-child(5) { border-left-color: #16a34a; background: var(--success-bg); }
+  .layer-name { font-weight: 700; }
+  .layer-desc { color: var(--text); }
+  .layer-size { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--accent); text-align: right; }
+  .layer-arrow {
+    text-align: center;
+    color: var(--sidenote);
+    font-size: 0.85em;
+    padding: 0.2rem 0;
+  }
+
+  /* Row buffer diagram */
+  .rowbuf-diagram { margin: 1.2rem 0; }
+  .rowbuf-diagram svg { max-width: 100%; height: auto; }
+
+  .key-point {
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1.5rem 0;
+    background: var(--accent-dim);
+  }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>DRAM 的 Word / Page / Burst — 和 C 语言 "Word" 的对比</h1>
+<p style="color:var(--sidenote);">260801 · <span class="tag">DRAM</span><span class="tag">Wordline</span><span class="tag">Row Buffer</span><span class="tag">Burst</span><span class="tag">Cache Line</span></p>
+
+<h2>问题</h2>
+<p>DRAM 激活一根 WL 时，上面所有 BL 都读出来了——是不是有多少条 BL，一个字就等于多少 bit？这和 C 语言的 Word 是什么关系？</p>
+
+<h2>回答：五层抽象，每层的"一次读出"含义完全不同</h2>
+
+<div class="layer-stack">
+  <div class="layer-row">
+    <div class="layer-name">🏗️ DRAM WL 激活<br><span style="font-size:0.8em;color:var(--sidenote);">物理层</span></div>
+    <div class="layer-desc">一根 WL 拉高 → 整行所有 BL 上存储单元同时连通到 Sense Amp → <strong>整行数据进入 Row Buffer</strong></div>
+    <div class="layer-size">1024–8192 bit</div>
+  </div>
+  <div class="layer-arrow">↓ Column Decoder 从中切一截</div>
+  <div class="layer-row">
+    <div class="layer-name">📌 Column Access<br><span style="font-size:0.8em;color:var(--sidenote);">芯片接口层</span></div>
+    <div class="layer-desc">Column Address 控制 Column Mux，从 Row Buffer（比如 1024 列）中选出窄的一截送到 DQ 引脚</div>
+    <div class="layer-size">4 / 8 / 16 bit<br>(x4 / x8 / x16)</div>
+  </div>
+  <div class="layer-arrow">↓ Burst: 连续送 N 个 Column</div>
+  <div class="layer-row">
+    <div class="layer-name">🔥 DDR Burst (一次 READ)<br><span style="font-size:0.8em;color:var(--sidenote);">JEDEC 协议层</span></div>
+    <div class="layer-desc">一个 READ 命令 → 连续 8 个 (DDR4) 或 16 个 (DDR5) 时钟沿的数据，DQ 宽度 × Burst Length</div>
+    <div class="layer-size">x8×8=64 bit<br>x16×8=128 bit</div>
+  </div>
+  <div class="layer-arrow">↓ 内存控制器可能合并多次 Burst + 多 Rank 并行</div>
+  <div class="layer-row">
+    <div class="layer-name">💾 Cache Line<br><span style="font-size:0.8em;color:var(--sidenote);">CPU-内存接口</span></div>
+    <div class="layer-desc">CPU 和 DRAM 之间的最小传输单位。一次 Cache Miss → 从 DRAM 搬一整条 Cache Line 填入 L1/L2</div>
+    <div class="layer-size">512 bit (64B)</div>
+  </div>
+  <div class="layer-arrow">↓ 软件看到的是这个</div>
+  <div class="layer-row">
+    <div class="layer-name">🖥️ C 语言 "Word"<br><span style="font-size:0.8em;color:var(--sidenote);">软件层</span></div>
+    <div class="layer-desc"><code>sizeof(int)</code> 取决于 ISA 和 ABI：ILP32 → 32 bit；LP64 → int=32bit, long=64bit, ptr=64bit。<strong>这是软件定义，和物理 BL 数量无关。</strong></div>
+    <div class="layer-size">32 / 64 bit</div>
+  </div>
+</div>
+
+<h2>Row Buffer 示意图</h2>
+
+<div class="rowbuf-diagram">
+  <svg viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg">
+    <!-- Cell Array -->
+    <rect x="20" y="15" width="350" height="55" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+    <text x="195" y="50" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)" text-anchor="middle">Cell Array · 1 根 WL (高亮) 选中一行</text>
+
+    <!-- Selected WL -->
+    <line x1="20" y1="32" x2="370" y2="32" stroke="var(--error)" stroke-width="2.5"/>
+    <text x="380" y="36" font-size="9" font-family="Inter,sans-serif" fill="var(--error)" font-weight="700">WLₙ (selected)</text>
+
+    <!-- BL arrows down -->
+    <line x1="50" y1="70" x2="50" y2="95" stroke="var(--sidenote)" stroke-width="0.8"/>
+    <line x1="110" y1="70" x2="110" y2="95" stroke="var(--sidenote)" stroke-width="0.8"/>
+    <line x1="170" y1="70" x2="170" y2="95" stroke="var(--sidenote)" stroke-width="0.8"/>
+    <line x1="230" y1="70" x2="230" y2="95" stroke="var(--sidenote)" stroke-width="0.8"/>
+    <line x1="290" y1="70" x2="290" y2="95" stroke="var(--sidenote)" stroke-width="0.8"/>
+    <line x1="350" y1="70" x2="350" y2="95" stroke="var(--sidenote)" stroke-width="0.8"/>
+
+    <text x="195" y="78" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">所有 BL 同时读入 ↓</text>
+
+    <!-- Row Buffer -->
+    <rect x="20" y="95" width="350" height="36" rx="4" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.8"/>
+    <text x="195" y="118" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)" text-anchor="middle">Row Buffer (Sense Amps) — 1024 bits in parallel</text>
+
+    <!-- Column Decoder -->
+    <rect x="410" y="95" width="100" height="36" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1.3"/>
+    <text x="460" y="113" font-size="9" font-family="Inter,sans-serif" font-weight="600" fill="var(--text)" text-anchor="middle">Col Decoder</text>
+    <text x="460" y="126" font-size="7" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">选 8/16 bit → DQ</text>
+
+    <line x1="370" y1="113" x2="410" y2="113" stroke="var(--accent)" stroke-width="1.5"/>
+
+    <!-- DQ output -->
+    <rect x="550" y="95" width="110" height="36" rx="4" fill="var(--callout-bg)" stroke="var(--callout-border)"/>
+    <text x="605" y="113" font-size="9" font-family="Inter,sans-serif" font-weight="600" fill="var(--text)" text-anchor="middle">DQ[7:0] 输出</text>
+    <text x="605" y="126" font-size="7" font-family="Inter,sans-serif" fill="var(--sidenote)" text-anchor="middle">x8 芯片</text>
+
+    <line x1="510" y1="113" x2="550" y2="113" stroke="var(--text)" stroke-width="1"/>
+
+    <!-- Labels -->
+    <text x="195" y="152" font-size="9" font-family="Inter,sans-serif" fill="var(--text-muted)" text-anchor="middle">整行同时读出 = Page · Column 从中抽一小段 = 一次 Column Access</text>
+  </svg>
+</div>
+
+<div class="key-point">
+  <h3 style="margin:0 0 0.5rem;">🔑 核心结论</h3>
+  <ol style="margin:0.3rem 0;">
+    <li>WL 激活出来的那 1024–8192 bit 叫 <strong>Page / Row Buffer</strong>，不叫 Word。</li>
+    <li>同行的后续 Column 访问几乎零延迟（数据已在 Row Buffer），这就是 <strong>行局部性（Row Locality）</strong>——也是 C 语言中 <code>array[i][j]</code> 把 j 放内层遍历快得多的<strong>物理根源</strong>。</li>
+    <li>C 语言的 <code>int</code>（32/64 bit）经过了 <strong>Row Buffer → Column Decoder → Burst Engine → 内存控制器 → Cache Line → Load/Store 指令</strong> 一共六层抽象，和物理 BL 数量没有直接对应关系。</li>
+    <li>DRAM 习惯用 I/O 宽度（x4/x8/x16）描述 DQ 引脚数，这是芯片封装层面的概念；C 语言 Word 是 ISA/ABI 层面的概念——两者完全在不同抽象层。</li>
+  </ol>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_SRAM-array-structure.html">SRAM 阵列结构详解</a> · <a href="../lessons/0002-dram-cell.html">Lesson 0002 — DRAM 1T1C 单元</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>
