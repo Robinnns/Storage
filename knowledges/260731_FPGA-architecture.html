@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPGA 内部资源与结构详解</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.9rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 700px) {
+    .resource-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 450px) {
+    .resource-grid { grid-template-columns: 1fr; }
+  }
+
+  .res-card {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 0.9rem;
+    background: var(--surface);
+  }
+  .res-card .res-icon { font-size: 1.4em; margin-bottom: 0.3rem; }
+  .res-card .res-name { font-weight: 700; font-size: 0.95em; margin-bottom: 0.3rem; }
+  .res-card .res-desc { font-size: 0.82em; color: var(--text-muted); line-height: 1.45; }
+
+  /* ASIC vs FPGA comparison side-by-side */
+  .arch-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 600px) {
+    .arch-compare { grid-template-columns: 1fr; }
+  }
+  .arch-col {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .arch-col .col-head {
+    padding: 0.55rem 1rem;
+    font-weight: 700;
+    font-size: 0.88em;
+    text-align: center;
+  }
+  .arch-col .col-body {
+    padding: 1rem;
+    font-size: 0.88em;
+    line-height: 1.6;
+  }
+  .col-asic .col-head { background: #fdf0ee; color: #c0392b; }
+  .col-fpga .col-head { background: var(--accent-dim); color: var(--accent); }
+
+  /* CLB slice diagram */
+  .slice-diagram {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin: 1.2rem 0;
+    background: var(--bg);
+    text-align: center;
+  }
+  .slice-diagram svg { max-width: 100%; height: auto; }
+
+  .as-fpga-wire { stroke: var(--accent); stroke-width: 1.2; fill: none; }
+  .as-fpga-wire-dim { stroke: var(--sidenote); stroke-width: 0.8; fill: none; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>FPGA 内部资源与结构详解</h1>
+<p style="color:var(--sidenote);">260731 · <span class="tag">FPGA</span><span class="tag">LUT</span><span class="tag">CLB</span><span class="tag">BRAM</span><span class="tag">DSP</span><span class="tag">ASIC</span></p>
+
+<h2>0. 先修正一个认知：ASIC 中寄存器真的"稀缺"吗？</h2>
+
+<p>更准确的说法是：<strong>ASIC 中每增加一个寄存器，要付出真实的面积和功耗代价；FPGA 中寄存器是预置的——你不用它也在那里。</strong></p>
+
+<div class="arch-compare">
+  <div class="arch-col col-asic">
+    <div class="col-head">ASIC — 按需定制</div>
+    <div class="col-body">
+      <p>你写 RTL 时用了多少寄存器 → 综合出来就是多少个 DFF → 每个 ~24T → <strong>面积精确按需付费</strong>。</p>
+      <p>优化目标：<strong>减少寄存器数量</strong>。多打一级流水线 → 面积 ↑、功耗 ↑。所以 ASIC 设计者在不影响时序的前提下会尽量共享寄存器、减少流水级数。</p>
+      <p>少用寄存器 ≠ 没有寄存器可用。一颗中等规模 SoC 轻松有几百万个 DFF。</p>
+      <p style="margin-bottom:0;"><strong>"稀缺"</strong>是相对 FPGA 而言的——在 ASIC 中你不会随便加流水线，因为<em>每个寄存器都是真金白银</em>。</p>
+    </div>
+  </div>
+  <div class="arch-col col-fpga">
+    <div class="col-head">FPGA — 预置架构</div>
+    <div class="col-body">
+      <p>FPGA 芯片出厂时，每个 Logic Element 已经自带一个寄存器。你不用它 → 它闲置浪费。你用它 → 没有额外成本。</p>
+      <p>优化目标变了：<strong>寄存器几乎免费，多打流水线反而降低关键路径延迟</strong>。FPGA 设计者习惯疯狂加流水级——反正寄存器就在 LUT 旁边，不额外占地。</p>
+      <p style="margin-bottom:0;"><strong>"寄存器丰富"</strong>不是说 FPGA 寄存器比 ASIC 多——而是说<strong>用寄存器的边际成本为零</strong>，这是一个经济/架构问题，不是数量问题。</p>
+    </div>
+  </div>
+</div>
+
+<h2>1. FPGA 核心可编程资源全景</h2>
+
+<div class="resource-grid">
+  <div class="res-card">
+    <div class="res-icon">🔲</div>
+    <div class="res-name">LUT (查找表)</div>
+    <div class="res-desc">组合逻辑的基本单元。本质是一个小 SRAM，输入端作地址线、输出端读存储值。通常为 4–6 输入 LUT。Xilinx 7系列：6-input LUT（可拆为2个5-input）。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">📦</div>
+    <div class="res-name">Flip-Flop (寄存器)</div>
+    <div class="res-desc">每个 LUT 配一个 DFF。LUT 的输出可选经过或不经过寄存器。这就是"FPGA 寄存器多"的来源——每个逻辑单元都预置了一个。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">🧱</div>
+    <div class="res-name">CLB / Slice</div>
+    <div class="res-desc">LUT + FF 的集合。Xilinx: 1 CLB = 2 Slices。1 Slice = 4×LUT6 + 8×FF + 进位链 + MUX。这是 FPGA 逻辑阵列的基本建筑块。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">🔗</div>
+    <div class="res-name">Switch Matrix (互连)</div>
+    <div class="res-desc">CLB 之间的可编程连线网络。占据 FPGA 芯片面积的 ~60–80% 和功耗的大部分。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">💾</div>
+    <div class="res-name">BRAM (块 RAM)</div>
+    <div class="res-desc">专用 SRAM 硬核。18Kb 或 36Kb 每块，可配置为单口/双口/简单双口/FIFO。同步读写。关键存储资源。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">✖️</div>
+    <div class="res-name">DSP Slice</div>
+    <div class="res-desc">硬化乘加单元。典型规格：18×25 或 27×18 乘法器 + 48-bit 累加器。做数字信号处理时比 LUT 搭乘法器快 ~10×、省 ~100× 面积。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">📡</div>
+    <div class="res-name">IOB (IO Block)</div>
+    <div class="res-desc">可编程 IO 焊盘。支持 LVCMOS、LVDS、SSTL、HSTL 等数十种电平标准。内置 SERDES（串化解串器）用于高速接口。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">⏱</div>
+    <div class="res-name">时钟管理</div>
+    <div class="res-desc">PLL / MMCM 锁相环，用于倍频、分频、相位调整、去抖动。全局时钟网络（BUFG）以低偏斜驱动整个芯片。</div>
+  </div>
+  <div class="res-card">
+    <div class="res-icon">🔌</div>
+    <div class="res-name">硬核 IP</div>
+    <div class="res-desc">PCIe Gen3/4/5 控制器、DDR4/5 内存控制器、高速收发器 (GTY/GTH, 达 28+ Gbps)、嵌入式处理器 (ARM Cortex-A/R 核)。</div>
+  </div>
+</div>
+
+<h2>2. FPGA 的逻辑单元：Slice 内部结构</h2>
+
+<div class="slice-diagram">
+  <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background: one Slice -->
+    <rect x="10" y="10" width="700" height="320" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.8"/>
+    <text x="360" y="34" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" font-weight="700" fill="var(--text)">一个 Slice（Xilinx 7系列）</text>
+
+    <!-- LUT A -->
+    <rect x="40" y="55" width="140" height="90" rx="5" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="110" y="77" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)">LUT₆ (A)</text>
+    <text x="110" y="93" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">64-bit SRAM</text>
+    <text x="110" y="107" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">6输入→1输出</text>
+    <text x="110" y="121" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">或 2×LUT₅</text>
+
+    <!-- A[5:0] inputs -->
+    <line x1="60" y1="45" x2="60" y2="55" class="as-fpga-wire-dim"/>
+    <text x="60" y="42" text-anchor="middle" font-size="7" font-family="Inter,sans-serif" fill="var(--sidenote)">A[5:0]</text>
+    <line x1="100" y1="45" x2="100" y2="55" class="as-fpga-wire-dim"/>
+    <line x1="140" y1="45" x2="140" y2="55" class="as-fpga-wire-dim"/>
+
+    <!-- LUT B -->
+    <rect x="40" y="170" width="140" height="90" rx="5" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="110" y="192" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)">LUT₆ (B)</text>
+    <text x="110" y="208" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">64-bit SRAM</text>
+
+    <!-- LUT C -->
+    <rect x="40" y="170" width="140" height="90" rx="5" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5" transform="translate(220,0)"/>
+    <text x="300" y="192" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)">LUT₆ (C)</text>
+
+    <!-- LUT D -->
+    <rect x="40" y="170" width="140" height="90" rx="5" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5" transform="translate(440,0)"/>
+    <text x="520" y="192" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)">LUT₆ (D)</text>
+
+    <!-- Flip-Flops row -->
+    <rect x="40" y="55" width="140" height="90" rx="5" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5" transform="translate(220,0)"/>
+    <text x="300" y="77" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)">LUT₆ (B)</text>
+    <text x="300" y="93" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="var(--sidenote)">64-bit SRAM</text>
+
+    <!-- Flip-flops: one per LUT output path -->
+    <!-- FF A -->
+    <rect x="210" y="68" width="55" height="28" rx="4" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.3"/>
+    <text x="237" y="80" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" font-weight="600" fill="var(--accent)">DFF</text>
+    <text x="237" y="91" text-anchor="middle" font-size="7" font-family="Inter,sans-serif" fill="var(--accent)">A</text>
+
+    <!-- LUT A → FF A -->
+    <line x1="180" y1="95" x2="210" y2="82" class="as-fpga-wire"/>
+
+    <!-- Carry chain between LUTs -->
+    <line x1="40" y1="135" x2="600" y2="135" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="350" y="130" text-anchor="middle" font-size="7" font-family="Inter,sans-serif" fill="var(--text-muted)">进位链 (CARRY4) — 专用快速进位, 连接4个LUT</text>
+
+    <!-- MUXF7 / MUXF8 combining LUT outputs -->
+    <rect x="240" y="145" width="250" height="18" rx="3" fill="var(--surface)" stroke="var(--border)" stroke-width="0.8"/>
+    <text x="365" y="157" text-anchor="middle" font-size="7" font-family="Inter,sans-serif" fill="var(--sidenote)">MUXF7 / MUXF8 — 组合LUT输出实现7/8输入函数</text>
+
+    <!-- Clock -->
+    <line x1="350" y1="50" x2="350" y2="20" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="350" y="16" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="var(--accent)" font-weight="600">CLK (全局时钟网络)</text>
+
+    <!-- Summary at bottom -->
+    <rect x="180" y="275" width="360" height="40" rx="5" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1"/>
+    <text x="360" y="293" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" font-weight="700" fill="var(--accent)">1 Slice = 4×LUT₆ + 8×FF + 进位链 + MUX</text>
+    <text x="360" y="308" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="var(--accent)">Xilinx Kintex-7 410T: 63,550 Slices → 254,200 LUT₆ + 508,400 FF</text>
+  </svg>
+</div>
+
+<h2>3. 关键洞察：为什么 FPGA 中"寄存器近乎免费"</h2>
+
+<p>回到最初的问题——这不是简单的资源多少，而是<strong>架构哲学的根本差异</strong>：</p>
+
+<table>
+  <thead>
+    <tr><th>维度</th><th>ASIC</th><th>FPGA</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>寄存器来源</td>
+      <td>综合器按 RTL 实例化 DFF</td>
+      <td>每个 Slice 预置 8 个 DFF</td>
+    </tr>
+    <tr>
+      <td>用寄存器的代价</td>
+      <td>面积↑ (~24T/bit), 功耗↑</td>
+      <td><strong>零边际成本</strong>（已经在芯片上了）</td>
+    </tr>
+    <tr>
+      <td>不用的代价</td>
+      <td>零（不存在）</td>
+      <td>浪费（但你已经为整颗芯片付过钱了）</td>
+    </tr>
+    <tr>
+      <td>流水线策略</td>
+      <td>谨慎加流水——只在需要时</td>
+      <td>激进加流水——"免费的午餐"</td>
+    </tr>
+    <tr>
+      <td>典型设计风格</td>
+      <td>寄存器共享、FSM 编码优化</td>
+      <td>高流水、宽数据通路、1-cycle 操作</td>
+    </tr>
+    <tr>
+      <td>寄存器资源上限</td>
+      <td>理论上无硬上限（面积限制）</td>
+      <td>硬上限（芯片出厂已固定）</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">💡 代码风格的关键差异</div>
+  <p><strong>ASIC 思维：</strong>"这段逻辑能复用吗？我可以少几个寄存器吗？这个状态机能少编码几个 bit 吗？"——每一处节省都转化为更小的面积和更低的功耗。</p>
+  <p><strong>FPGA 思维：</strong>"这个操作能拆成多级流水吗？能加一级流水来打断长组合路径吗？"——寄存器反正就在 LUT 旁边，不用白不用。关键路径从 5ns 降到 2ns → 时钟频率从 200MHz 提 500MHz，代价就是多用了几百个你本来就有的 DFF。</p>
+  <p style="margin-bottom:0;">同一个人做 ASIC 和 FPGA 设计，代码风格可以完全不同——这不是水平问题，是<strong>架构约束</strong>问题。</p>
+</div>
+
+<h2>4. BRAM 在 FPGA 中的角色</h2>
+
+<p>FPGA 中"BRAM"和之前讨论的"BRAM = FPGA 内的 SRAM 硬核"是一回事。在 FPGA 内部结构视角下：</p>
+
+<ul>
+  <li>BRAM 是<strong>与 Slice 并列的独立列资源</strong>，均匀分布在芯片上（通常每列 CLB 旁边嵌几块 BRAM）</li>
+  <li>典型规格：18Kb/块（Xilinx），可级联为大容量，也可拆分为两个 9Kb 独立使用</li>
+  <li>配置模式：真双口（两个独立读写端口）、简单双口（一读一写）、单口、ROM、FIFO</li>
+  <li>数据宽度可配：1、2、4、9、18、36 bit</li>
+  <li>和分布式 RAM（LUT 搭的 SRAM）的区别：BRAM 容量大、功耗低、但延迟固定（通常 1 周期）；分布式 RAM 延迟低、容量小、可灵活配置</li>
+  <li><strong>在你的存储系统工作中：</strong>BRAM 常用来实现小容量行缓冲、Cache Tag 阵列、FIFO——用 LUT 搭这些功能会烧掉几千个 Slice，而一块 BRAM 就搞定</li>
+</ul>
+
+<h2>5. DSP Slice：为什么 FPGA 能做信号处理</h2>
+
+<p>如果只用 LUT 搭一个 18×18 乘法器，大约需要 400+ 个 LUT。一片 FPGA 有几十万个 LUT 听起来很多，但几千个乘法器下去就全耗光了。</p>
+
+<p>DSP Slice 把乘法器、累加器、流水线寄存器硬化——一个 DSP48E1 完成 25×18 乘法 + 48-bit 累加，只需 <strong>1 个 DSP Slice</strong>（而不是 400 个 LUT），还能跑到 500MHz+。</p>
+
+<p>中等规模 FPGA（如 Kintex-7 410T）有 1,540 个 DSP Slices。这对存储控制器中的 ECC 计算、NAND 信号处理、DDR 校准算法是关键的硬件资源。</p>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM — 术语辨析</a> · <a href="260731_latch-flipflop-transistor.html">锁存器与触发器的晶体管级结构</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

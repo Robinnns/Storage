@@ -75,6 +75,38 @@ const entries = [
   //   related: { lesson: '0001', ref: 'memory-tech' }
   // },
   {
+    date: '260801',
+    file: '260801_EDA-tools-overview.html',
+    topic: '数字 IC 工具全景：从入门到专业',
+    summary: '入门级（Logisim-evolution、Digital、EDA Playground、Icarus+GTKWave）→ 专业 ASIC 工具链（VCS+Verdi、DC、PrimeTime、Innovus、Calibre）。按设计流程排列，标注三大 EDA 厂商格局。',
+    tags: ['EDA', '仿真', '综合', 'VCS', 'Verdi', 'Vivado', '工具链'],
+    related: {}
+  },
+  {
+    date: '260801',
+    file: '260801_DFF-structures.html',
+    topic: 'DFF 的五种主要结构',
+    summary: 'TG Master-Slave (标准库主力 ~24T)、C²MOS (低电压)、TSPC (单相时钟 ~12T)、Pulse Latch (处理器关键路径)、SAFF (SerDes/高速IO)。每种的速度/功耗/可靠性权衡。',
+    tags: ['DFF', '时序电路', '标准单元', '高速设计', 'TSPC'],
+    related: {}
+  },
+  {
+    date: '260731',
+    file: '260731_FPGA-architecture.html',
+    topic: 'FPGA 内部资源与结构详解',
+    summary: 'ASIC vs FPGA 寄存器"稀缺"的真相：不是数量问题，是边际成本问题。FPGA Slice 结构：LUT + FF + 进位链。BRAM、DSP、互连网络全景。',
+    tags: ['FPGA', 'LUT', 'CLB', 'BRAM', 'DSP', 'ASIC'],
+    related: {}
+  },
+  {
+    date: '260731',
+    file: '260731_latch-flipflop-transistor.html',
+    topic: '锁存器与触发器的晶体管级结构',
+    summary: 'D 锁存器：传输门 + 正反馈环 (~12T)；D 触发器：Master-Slave 两级级联 (~24T)。为什么 CPU 寄存器用触发器而不是锁存器或 SRAM？晶体管数对比。',
+    tags: ['寄存器', '锁存器', '触发器', '传输门', 'CMOS'],
+    related: {}
+  },
+  {
     date: '260731',
     file: '260731_SRAM-array-structure.html',
     topic: 'SRAM 阵列结构详解 — 框图 + 五层拆解',

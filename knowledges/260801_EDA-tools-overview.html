@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字IC工具全景：从入门到专业</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .flow-section {
+    border-left: 3px solid var(--accent);
+    padding-left: 1.2rem;
+    margin: 1.8rem 0;
+  }
+  .flow-section h3 { margin-top: 0; }
+
+  .tool-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin: 0.6rem 0;
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.6rem;
+    align-items: baseline;
+    font-size: 0.9em;
+  }
+  @media (max-width: 520px) {
+    .tool-card { grid-template-columns: 1fr; }
+  }
+  .tool-card .tc-name {
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .tool-card .tc-vendor {
+    font-size: 0.82em;
+    color: var(--sidenote);
+  }
+  .tool-card .tc-desc {
+    color: var(--text);
+    line-height: 1.55;
+  }
+
+  /* Flow diagram */
+  .flow-chain {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+    margin: 1.2rem 0;
+    font-size: 0.82em;
+  }
+  .flow-step {
+    padding: 0.35rem 0.6rem;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg);
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .flow-step.kernel { border-color: var(--accent); background: var(--accent-dim); }
+  .flow-arrow { color: var(--accent); font-weight: 700; }
+
+  /* Vendor badges */
+  .ven-synopsys { background: #e8f0fe; color: #1a56b0; }
+  .ven-cadence  { background: #fce8e8; color: #a03030; }
+  .ven-siemens  { background: #e8f8e8; color: #2a6a2a; }
+  .ven-xilinx   { background: #fdf3d0; color: #8a5a14; }
+  .ven-intel    { background: #e0f0ff; color: #0058a0; }
+  .ven-oss      { background: var(--surface); color: var(--text-muted); }
+  .ven-tag {
+    display: inline-block;
+    font-size: 0.72em;
+    font-weight: 600;
+    padding: 0.1em 0.45em;
+    border-radius: 3px;
+    margin-left: 0.4em;
+  }
+
+  /* Tier legend */
+  .tier-legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 0.8rem 0 1.5rem;
+    font-size: 0.82em;
+  }
+  .tier-dot {
+    display: inline-block;
+    width: 10px; height: 10px; border-radius: 50%;
+    margin-right: 0.3em;
+  }
+  .tier-entry { background: #4da8e8; }
+  .tier-pro   { background: #e0554a; }
+  .tier-fpga  { background: #e6a817; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>数字 IC 工具全景：从入门到专业</h1>
+<p style="color:var(--sidenote);">260801 · <span class="tag">EDA</span><span class="tag">仿真</span><span class="tag">综合</span><span class="tag">工具链</span><span class="tag">VCS</span><span class="tag">Verdi</span><span class="tag">Vivado</span></p>
+
+<div class="tier-legend">
+  <span><span class="tier-dot tier-entry"></span>入门/学习级</span>
+  <span><span class="tier-dot tier-pro"></span>专业 ASIC 级</span>
+  <span><span class="tier-dot tier-fpga"></span>FPGA 厂商</span>
+</div>
+
+<!-- ============================================================ -->
+<h2>一、入门 / 学习级工具</h2>
+<!-- ============================================================ -->
+
+<div class="flow-section">
+<h3>图形化逻辑仿真</h3>
+
+<div class="tool-card">
+  <div><div class="tc-name">Logisim-evolution</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源 GPLv3</span></div></div>
+  <div class="tc-desc">经典 Logisim 的活跃分支。拖放逻辑门+触发器+SoC 组件，实时看信号传播。支持 VHDL/Verilog 导出和 FPGA 板卡对接。最适合<strong>直观理解存储单元</strong>——搭 6T SRAM、D 触发器、小容量存储阵列。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Digital</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源 GPLv3</span> · HNeemann</div></div>
+  <div class="tc-desc">Logisim-evolution 的竞品，UI 更现代、操作更流畅。同样支持 VHDL/Verilog 导出。功能不如 Logisim-evolution 多（无 SoC 组件），但作为逻辑仿真入门更轻量。</div>
+</div>
+</div>
+
+<div class="flow-section">
+<h3>在线 HDL 仿真（免安装）</h3>
+
+<div class="tool-card">
+  <div><div class="tc-name">EDA Playground</div><div class="tc-vendor"><span class="ven-tag ven-oss">免费在线</span> · edaplayground.com</div></div>
+  <div class="tc-desc">浏览器写 Verilog/VHDL → 一键仿真 → 内置波形窗口。支持 Icarus、Verilator、VCS 等多种仿真引擎。<strong>芯片工程师的"JSFiddle"</strong>——面试或快速验证小模块时的首选。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">WaveDrom</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源</span> · wavedrom.com</div></div>
+  <div class="tc-desc">JSON 画时序图——不是仿真工具，是<strong>时序图绘制器</strong>。做笔记时画 DDR tRCD/tCL/tRP 时序关系，比手绘或 ASCII 图专业。可嵌入 Markdown 文档。</div>
+</div>
+</div>
+
+<div class="flow-section">
+<h3>本地 HDL 仿真</h3>
+
+<div class="tool-card">
+  <div><div class="tc-name">Icarus Verilog (iverilog)</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源</span></div></div>
+  <div class="tc-desc">Verilog-2005 的免费编译+仿真器。语法检查+仿真一体，输出 VCD 波形文件。<strong>大学数字设计的标准工具链：</strong>写 Verilog → iverilog 仿真 → GTKWave 看波形。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Verilator</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源</span></div></div>
+  <div class="tc-desc">把 Verilog 编译成 C++ 再跑仿真——速度比 Icarus 快 10–100×，适合跑大规模回归。代价是 testbench 需用 C++ 写，上手门槛更高。<strong>学习阶段用 Icarus 就够了。</strong></div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">GHDL</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源</span></div></div>
+  <div class="tc-desc">VHDL 版的 Icarus——如果你或你的团队用 VHDL 而非 Verilog。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">GTKWave</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源</span></div></div>
+  <div class="tc-desc">开源波形查看器，读取 VCD (Value Change Dump) 文件。通常和 Icarus Verilog 搭配：<code>iverilog → .vcd → GTKWave</code>。几乎每个 FPGA 教程第一课都是这套组合。</div>
+</div>
+</div>
+
+<div class="flow-section">
+<h3>进阶开源工具</h3>
+
+<div class="tool-card">
+  <div><div class="tc-name">Yosys</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源</span></div></div>
+  <div class="tc-desc">开源 RTL 综合器——Verilog → 门级网表。开源 FPGA 工具链的核心环节。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">cocotb</div><div class="tc-vendor"><span class="ven-tag ven-oss">开源</span></div></div>
+  <div class="tc-desc">Python 写 testbench，底层调 Icarus/Verilator/GHDL——用 Python 的灵活性替代 Verilog testbench 的繁琐。验证效率提升一个数量级。</div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>二、专业 ASIC 工具链</h2>
+<!-- ============================================================ -->
+
+<div class="flow-section">
+<h3>三大 EDA 厂商格局</h3>
+
+<div class="tool-card">
+  <div><div class="tc-name">Synopsys（新思）</div><div class="tc-vendor">全球第一</div></div>
+  <div class="tc-desc">综合和时序领域统治级。VCS（仿真）、Design Compiler（综合）、PrimeTime（STA）、Verdi（调试）、SpyGlass（Lint）——几乎每个环节都有业界最好的工具。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Cadence（楷登）</div><div class="tc-vendor">全球第二</div></div>
+  <div class="tc-desc">物理设计和验证强。Xcelium（仿真）、Genus（综合）、Innovus（布局布线）、JasperGold（形式验证）、Voltus（功耗分析）。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Siemens/Mentor（明导）</div><div class="tc-vendor">全球第三</div></div>
+  <div class="tc-desc">DFT 和物理验证独大。Tessent（DFT 王者）、Calibre（DRC/LVS 物理验证，所有芯片流片前必跑）、QuestaSim（仿真）。</div>
+</div>
+</div>
+
+<div class="flow-section">
+<h3>按设计流程排列</h3>
+
+<h4>① Lint / 代码质量</h4>
+<div class="tool-card">
+  <div><div class="tc-name">SpyGlass</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc"><strong>行业标准</strong>——Lint、CDC（跨时钟域检查）、RDC（复位域检查）一体。几乎没有芯片项目不用它。在仿真之前先扫一遍 RTL 代码质量。</div>
+</div>
+
+<h4>② RTL 仿真</h4>
+<div class="tool-card">
+  <div><div class="tc-name">VCS</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc"><strong>市场占有率最高的仿真器。</strong>编译速度快，SystemVerilog 全特性支持。亚洲芯片公司的黄金搭档：<strong>VCS + Verdi</strong>。国内 SSD 控制器、NAND 控制器团队大概率用这套。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Xcelium</div><div class="tc-vendor"><span class="ven-tag ven-cadence">Cadence</span></div></div>
+  <div class="tc-desc">VCS 的竞品。并行仿真强，大规模回归时性能出色。配 SimVision 做波形调试。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">QuestaSim</div><div class="tc-vendor"><span class="ven-tag ven-siemens">Siemens</span></div></div>
+  <div class="tc-desc">FPGA 和 ASIC 通吃，界面友好。ModelSim 是其简化版（FPGA 圈子最普及）。</div>
+</div>
+
+<h4>③ 综合 (Synthesis)</h4>
+<div class="tool-card">
+  <div><div class="tc-name">Design Compiler (DC)</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc"><strong>ASIC 综合之王。</strong>RTL → 门级网表。台积电、三星所有工艺节点都支持。需要读 .lib/.db 标准单元库和 SDC 时序约束文件。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Vivado</div><div class="tc-vendor"><span class="ven-tag ven-xilinx">AMD/Xilinx</span></div></div>
+  <div class="tc-desc">FPGA 综合+布局布线一体。把 RTL 映射到 LUT+FF+BRAM+DSP。和 DC 本质不同——面向 FPGA 预置资源而非 ASIC 标准单元库。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Quartus</div><div class="tc-vendor"><span class="ven-tag ven-intel">Intel/Altera</span></div></div>
+  <div class="tc-desc">Intel FPGA 的综合+布局布线工具，Vivado 的竞品。</div>
+</div>
+
+<h4>④ 静态时序分析 (STA)</h4>
+<div class="tool-card">
+  <div><div class="tc-name">PrimeTime (PT)</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc"><strong>STA 的事实标准。</strong>不跑仿真，纯数学算出所有时序路径是否满足 setup/hold。<strong>流片前最后一道数字关卡。</strong>Foundry 签核（sign-off）只认它。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">Tempus</div><div class="tc-vendor"><span class="ven-tag ven-cadence">Cadence</span></div></div>
+  <div class="tc-desc">PrimeTime 的竞品。</div>
+</div>
+
+<h4>⑤ 布局布线 (Place & Route)</h4>
+<div class="tool-card">
+  <div><div class="tc-name">Innovus</div><div class="tc-vendor"><span class="ven-tag ven-cadence">Cadence</span></div></div>
+  <div class="tc-desc"><strong>物理设计市场份额第一。</strong>门级网表 → 标准单元放置 → 金属连线 → 时序/功耗优化。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">IC Compiler II (ICC2)</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc">Innovus 的竞品。</div>
+</div>
+
+<h4>⑥ 调试 / 波形查看</h4>
+<div class="tool-card">
+  <div><div class="tc-name">Verdi</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc"><strong>调试器之王。</strong>不只是看波形——自动追踪信号驱动源、画电路图、FSDB 波形分析和代码交叉索引。你在波形上看到一个 X（不定态），点一下就追溯到谁驱动的、哪个逻辑导致。国内存储控制器团队标配。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">SimVision</div><div class="tc-vendor"><span class="ven-tag ven-cadence">Cadence</span></div></div>
+  <div class="tc-desc">Xcelium 配套的波形+调试工具。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">DVE</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc">VCS 自带的调试器，Verdi 的简化版。</div>
+</div>
+
+<h4>⑦ 形式验证 (Formal Verification)</h4>
+<div class="tool-card">
+  <div><div class="tc-name">Formality</div><div class="tc-vendor"><span class="ven-tag ven-synopsys">Synopsys</span></div></div>
+  <div class="tc-desc">数学证明综合后网表 ≈ 原始 RTL，不走仿真。用 SAT/BDD 算法。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">JasperGold</div><div class="tc-vendor"><span class="ven-tag ven-cadence">Cadence</span></div></div>
+  <div class="tc-desc">Cadence 的形式验证方案。也常用于属性检查（SVA 断言的穷举验证）。</div>
+</div>
+
+<h4>⑧ DFT（可测试性设计）</h4>
+<div class="tool-card">
+  <div><div class="tc-name">Tessent</div><div class="tc-vendor"><span class="ven-tag ven-siemens">Siemens</span></div></div>
+  <div class="tc-desc"><strong>DFT 工具链绝对王者。</strong>在芯片中插入扫描链（Scan Chain）、BIST 电路——量产时靠这些发现制造缺陷。几乎所有芯片的 DFT 都靠它。</div>
+</div>
+
+<h4>⑨ 功耗分析</h4>
+<div class="tool-card">
+  <div><div class="tc-name">Voltus</div><div class="tc-vendor"><span class="ven-tag ven-cadence">Cadence</span></div></div>
+  <div class="tc-desc">Cadence 的功耗签核工具。</div>
+</div>
+
+<div class="tool-card">
+  <div><div class="tc-name">RedHawk</div><div class="tc-vendor"><span class="ven-tag ven-oss">Ansys</span>（独立厂商）</div></div>
+  <div class="tc-desc">IR-drop 和 EM（电迁移）分析的行业标准。</div>
+</div>
+
+<h4>⑩ 物理验证（DRC / LVS）</h4>
+<div class="tool-card">
+  <div><div class="tc-name">Calibre</div><div class="tc-vendor"><span class="ven-tag ven-siemens">Siemens</span></div></div>
+  <div class="tc-desc"><strong>物理验证的唯一王者。</strong>DRC（设计规则检查）和 LVS（版图 vs 原理图比对）。虽然不算"数字工具"，但<strong>所有芯片流片前必须跑 Calibre</strong>，没有例外。</div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>三、一个典型 ASIC 项目的完整工具链</h2>
+<!-- ============================================================ -->
+
+<p style="margin:1.2rem 0;">以国内某 SSD 控制器 / NAND 控制器团队为例：</p>
+
+<div class="flow-chain">
+  <div class="flow-step">RTL 编写</div><span class="flow-arrow">→</span>
+  <div class="flow-step">SpyGlass</div><span class="flow-arrow">→</span>
+  <div class="flow-step kernel">VCS + Verdi</div><span class="flow-arrow">→</span>
+  <div class="flow-step kernel">Design Compiler</div><span class="flow-arrow">→</span>
+  <div class="flow-step">Formality</div>
+</div>
+<div class="flow-chain" style="margin-top:0.2rem;">
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">Tessent</div><span class="flow-arrow">→</span>
+  <div class="flow-step kernel">Innovus / ICC2</div><span class="flow-arrow">→</span>
+  <div class="flow-step kernel">PrimeTime</div><span class="flow-arrow">→</span>
+  <div class="flow-step">Voltus / RedHawk</div><span class="flow-arrow">→</span>
+  <div class="flow-step">Calibre</div><span class="flow-arrow">→</span>
+  <div class="flow-step" style="border-color:var(--error);color:var(--error);">Tape-Out</div>
+</div>
+
+<p style="font-size:0.82em;color:var(--sidenote);margin-top:0.5em;">🔵 蓝色高亮 = 你的存储控制器工作中最可能直接接触的工具</p>
+
+<!-- ============================================================ -->
+<h2>四、和你当前阶段的关系</h2>
+<!-- ============================================================ -->
+
+<table>
+  <thead>
+    <tr><th>阶段</th><th>工具</th><th>要掌握什么</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>现在</strong><br><span style="font-size:0.82em;color:var(--sidenote);">学习存储原理</span></td>
+      <td>Logisim-evolution · Digital · EDA Playground</td>
+      <td>搭 SRAM 单元、D 触发器、小阵列——建立<strong>硬件直觉</strong></td>
+    </tr>
+    <tr>
+      <td><strong>即将</strong><br><span style="font-size:0.82em;color:var(--sidenote);">学 RTL 和仿真</span></td>
+      <td>Icarus + GTKWave → VCS / Verdi</td>
+      <td>写 testbench、跑时序仿真、trace 波形——<strong>验证思维</strong></td>
+    </tr>
+    <tr>
+      <td><strong>工作需要</strong><br><span style="font-size:0.82em;color:var(--sidenote);">系统集成岗</span></td>
+      <td>VCS · Verdi · SpyGlass</td>
+      <td>未必跑综合布局，但要能<strong>看懂 Verdi 波形</strong>、理解 STA 报告、能和前端设计师用同一套语言交流</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">💡 关键认知</div>
+  <p>对你来说最重要的两个工具是 <strong>VCS + Verdi</strong>——它们是日常主力。Verdi 的"反向追溯"能力（波形上点一个 X → 自动追踪到驱动源）是调试效率的核心。其余工具知道在整个流程中的位置和目的就够了——真正调 NAND 控制器时自然会深入。</p>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_FPGA-architecture.html">FPGA 内部资源与结构详解</a> · <a href="260801_DFF-structures.html">DFF 的五种主要结构</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

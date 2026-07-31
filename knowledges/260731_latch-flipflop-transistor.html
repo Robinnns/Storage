@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>锁存器与触发器的晶体管级结构</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .structure-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.8rem 0;
+  }
+  @media (max-width: 650px) {
+    .structure-row { grid-template-columns: 1fr; }
+  }
+
+  .struct-card {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .struct-card .card-head {
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    font-size: 0.85em;
+    text-align: center;
+  }
+  .struct-card .card-body {
+    padding: 0.8rem;
+    background: var(--bg);
+    text-align: center;
+  }
+  .struct-card .card-body svg { max-width: 100%; height: auto; }
+  .struct-card .card-stats {
+    padding: 0.5rem 1rem;
+    font-size: 0.78em;
+    color: var(--text-muted);
+    text-align: center;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .head-latch { background: #fdf3d0; color: #8a6d14; }
+  .head-ff    { background: var(--accent-dim); color: var(--accent); }
+
+  /* Comparison table highlight */
+  .highlight-row td { background: var(--accent-dim); }
+
+  /* SVG colors */
+  .sg-pmos { fill: #e8ecf0; stroke: var(--text-muted); stroke-width: 1.3; }
+  .sg-nmos { fill: var(--surface); stroke: var(--text-muted); stroke-width: 1.3; }
+  .sg-wire { stroke: var(--text); stroke-width: 1.2; fill: none; }
+  .sg-wire-thin { stroke: var(--text-muted); stroke-width: 0.8; fill: none; }
+  .sg-wire-accent { stroke: var(--accent); stroke-width: 1.5; fill: none; }
+  .sg-label { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 10px; }
+  .sg-label-sm { fill: var(--sidenote); font-family: 'Inter', sans-serif; font-size: 8px; }
+  .sg-label-b { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; }
+  .sg-inv { stroke: var(--text); stroke-width: 1.5; fill: none; }
+  .sg-tgate { stroke: var(--accent); stroke-width: 1.5; fill: var(--accent-dim); rx: 3; }
+  .sg-bubble { fill: var(--bg); stroke: var(--text); stroke-width: 1; }
+
+  [data-theme="dark"] .sg-pmos { fill: #1e2530; stroke: #8899b0; stroke-width: 1.3; }
+  [data-theme="dark"] .sg-nmos { fill: #182232; stroke: #8899b0; stroke-width: 1.3; }
+  [data-theme="dark"] .sg-bubble { fill: var(--bg); stroke: #e2e8f0; stroke-width: 1; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>锁存器与触发器的晶体管级结构</h1>
+<p style="color:var(--sidenote);">260731 · <span class="tag">寄存器</span><span class="tag">锁存器</span><span class="tag">触发器</span><span class="tag">晶体管</span><span class="tag">CMOS</span></p>
+
+<h2>为什么需要区分锁存器和触发器？</h2>
+
+<p>在之前 <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器</a> 的讨论中，我们说到 CPU 寄存器不是 SRAM——但寄存器到底是由什么构成的？答案是一个叫 <strong>D 触发器（D Flip-Flop）</strong> 的电路，而理解 D 触发器之前，必须先理解 <strong>D 锁存器（D Latch）</strong>。</p>
+
+<p>两者都是存储 1 bit 的电路，区别在于 <strong>对时钟的响应方式</strong>：</p>
+
+<ul>
+  <li><strong>锁存器</strong>是电平敏感的：Clock 高电平时"透明"（D 直接传到 Q），Clock 低电平时"锁住"（保持 Q 不变）</li>
+  <li><strong>触发器</strong>是边沿敏感的：只在 Clock 的上升沿（或下降沿）采样 D，其余时间 Q 保持不变</li>
+</ul>
+
+<h2>1. D 锁存器：基于传输门的实现</h2>
+
+<div class="structure-row">
+  <div class="struct-card">
+    <div class="card-head head-latch">D 锁存器 — 传输门实现</div>
+    <div class="card-body">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Input D -->
+        <line x1="30" y1="50" x2="60" y2="50" class="sg-wire"/>
+        <text x="25" y="45" class="sg-label-b">D</text>
+        <text x="25" y="57" class="sg-label-sm">输入</text>
+
+        <!-- Transmission gate TG1 -->
+        <rect x="60" y="35" width="40" height="30" class="sg-tgate"/>
+        <text x="80" y="48" class="sg-label-sm">TG₁</text>
+        <text x="80" y="58" class="sg-label-sm">N+P</text>
+
+        <!-- Clock signals for TG1 -->
+        <line x1="80" y1="25" x2="80" y2="35" class="sg-wire-accent"/>
+        <text x="90" y="22" class="sg-label-sm" fill="var(--accent)">CK</text>
+        <line x1="80" y1="65" x2="80" y2="75" class="sg-wire-accent"/>
+        <text x="90" y="72" class="sg-label-sm" fill="var(--accent)">CK</text>
+
+        <!-- Output of TG1 → node X -->
+        <line x1="100" y1="50" x2="140" y2="50" class="sg-wire"/>
+        <text x="120" y="43" class="sg-label-sm">X (存储节②)</text>
+
+        <!-- Feedback inverter Inv2 -->
+        <circle cx="170" cy="110" r="22" fill="var(--surface)" stroke="var(--text)" stroke-width="1.3"/>
+        <text x="170" y="107" class="sg-label">Inv₂</text>
+        <text x="170" y="120" class="sg-label-sm">反馈</text>
+
+        <!-- Forward inverter Inv1 -->
+        <circle cx="170" cy="50" r="22" fill="var(--surface)" stroke="var(--text)" stroke-width="1.3"/>
+        <text x="170" y="46" class="sg-label">Inv₁</text>
+        <text x="170" y="60" class="sg-label-sm">前向</text>
+
+        <!-- X → Inv1 input -->
+        <line x1="140" y1="50" x2="148" y2="50" class="sg-wire"/>
+        <!-- Inv1 output → Q -->
+        <line x1="192" y1="50" x2="230" y2="50" class="sg-wire"/>
+        <text x="240" y="45" class="sg-label-b">Q</text>
+        <text x="240" y="57" class="sg-label-sm">输出</text>
+
+        <!-- Q feedback branch → TG2 -->
+        <line x1="210" y1="50" x2="210" y2="130" class="sg-wire"/>
+        <line x1="210" y1="130" x2="110" y2="130" class="sg-wire"/>
+
+        <!-- Transmission gate TG2 -->
+        <rect x="110" y="115" width="40" height="30" class="sg-tgate"/>
+        <text x="130" y="128" class="sg-label-sm">TG₂</text>
+        <text x="130" y="138" class="sg-label-sm">N+P</text>
+
+        <!-- Clock for TG2 (inverted polarity) -->
+        <line x1="130" y1="105" x2="130" y2="115" class="sg-wire-accent"/>
+        <text x="140" y="102" class="sg-label-sm" fill="var(--accent)">CK</text>
+        <line x1="130" y1="145" x2="130" y2="155" class="sg-wire-accent"/>
+        <text x="140" y="152" class="sg-label-sm" fill="var(--accent)">CK</text>
+
+        <!-- TG2 output → node X -->
+        <line x1="150" y1="130" x2="150" y2="100" class="sg-wire"/>
+        <line x1="150" y1="100" x2="150" y2="50" class="sg-wire"/>
+        <circle cx="150" cy="50" r="3" fill="var(--text)"/>
+
+        <!-- Cross-coupling visualization: Inv2 input from Q -->
+        <line x1="170" y1="110" x2="140" y2="150" class="sg-wire-thin"/>
+        <text x="120" y="165" class="sg-label-sm">Q̅ → 接回 TG₂ 形成正反馈</text>
+
+        <!-- Labels -->
+        <rect x="300" y="30" width="85" height="65" rx="5" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="342" y="48" class="sg-label-sm" text-anchor="middle">CK=1 时</text>
+        <text x="342" y="62" class="sg-label-sm" text-anchor="middle">TG₁ 导通(透明)</text>
+        <text x="342" y="76" class="sg-label-sm" text-anchor="middle">TG₂ 断开</text>
+        <text x="342" y="90" class="sg-label-sm" text-anchor="middle">D → Q 直通</text>
+
+        <rect x="300" y="105" width="85" height="65" rx="5" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="342" y="123" class="sg-label-sm" text-anchor="middle">CK=0 时</text>
+        <text x="342" y="137" class="sg-label-sm" text-anchor="middle">TG₁ 断开</text>
+        <text x="342" y="151" class="sg-label-sm" text-anchor="middle">TG₂ 导通(反馈)</text>
+        <text x="342" y="165" class="sg-label-sm" text-anchor="middle">Q 保持锁存</text>
+      </svg>
+    </div>
+    <div class="card-stats">~10–12 个晶体管（含时钟反相器）</div>
+  </div>
+  <div class="struct-card">
+    <div class="card-head head-ff">D 触发器 — 主从结构 (Master-Slave)</div>
+    <div class="card-body">
+      <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- Input D -->
+        <line x1="20" y1="60" x2="50" y2="60" class="sg-wire"/>
+        <text x="18" y="55" class="sg-label-b">D</text>
+
+        <!-- Master Latch (transparent when CK=0) -->
+        <rect x="50" y="30" width="130" height="80" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+        <text x="115" y="50" class="sg-label-b">Master Latch</text>
+        <text x="115" y="68" class="sg-label-sm">CK=0 时透明</text>
+        <text x="115" y="83" class="sg-label-sm">CK=1 时锁存</text>
+        <text x="115" y="98" class="sg-label-sm">~12 晶体管</text>
+
+        <!-- Master → Slave connection -->
+        <line x1="180" y1="70" x2="220" y2="70" class="sg-wire"/>
+        <text x="200" y="64" class="sg-label-sm">M</text>
+
+        <!-- Slave Latch (transparent when CK=1) -->
+        <rect x="220" y="30" width="130" height="80" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8" stroke-dasharray="5 3"/>
+        <text x="285" y="50" class="sg-label-b">Slave Latch</text>
+        <text x="285" y="68" class="sg-label-sm">CK=1 时透明</text>
+        <text x="285" y="83" class="sg-label-sm">CK=0 时锁存</text>
+        <text x="285" y="98" class="sg-label-sm">~12 晶体管</text>
+
+        <!-- Output Q -->
+        <line x1="350" y1="70" x2="380" y2="70" class="sg-wire"/>
+        <text x="385" y="65" class="sg-label-b">Q</text>
+
+        <!-- Clock inputs -->
+        <line x1="115" y1="15" x2="115" y2="30" class="sg-wire-accent"/>
+        <text x="115" y="12" class="sg-label-sm" fill="var(--accent)">CK</text>
+        <line x1="285" y1="15" x2="285" y2="30" class="sg-wire-accent"/>
+        <text x="285" y="12" class="sg-label-sm" fill="var(--accent)">CK</text>
+
+        <!-- Timing diagram -->
+        <text x="130" y="135" class="sg-label-sm">上升沿触发过程：</text>
+
+        <!-- CK waveform -->
+        <text x="155" y="155" class="sg-label-sm">CK:</text>
+        <polyline points="170,155 210,155 210,155 210,140 250,140 250,155 290,155"
+                 stroke="var(--accent)" stroke-width="1.8" fill="none"/>
+
+        <!-- Step annotations -->
+        <text x="170" y="175" class="sg-label-sm">①升沿前</text>
+        <text x="230" y="175" class="sg-label-sm">②升沿瞬间</text>
+        <text x="280" y="175" class="sg-label-sm">③升沿后</text>
+
+        <text x="155" y="130" class="sg-label-sm">CK=0: Master透明→D→M</text>
+        <text x="155" y="142" class="sg-label-sm">↓ CK↑  Master锁存M, Slave透明→Q=M</text>
+        <text x="155" y="154" class="sg-label-sm">CK=1: Slave透明→Q维持=M</text>
+      </svg>
+    </div>
+    <div class="card-stats">~20–24 个晶体管（主从各一锁存器 + 时钟树）</div>
+  </div>
+</div>
+
+<h3>D 锁存器的工作流程</h3>
+
+<p>核心是 <strong>一个传输门 + 一个正反馈回路</strong>，利用传输门在 CK 高/低电平时的导通状态切换，实现"透明"和"锁存"两种模式：</p>
+
+<ol>
+  <li><strong>CK = 1（高电平）：</strong>传输门 TG₁ 导通，TG₂ 断开。D 经过 TG₁ 和反相器 Inv₁ 直接传到 Q——这是 <strong>"透明"状态</strong>，Q 随 D 变化。</li>
+  <li><strong>CK = 0（低电平）：</strong>TG₁ 断开，TG₂ 导通。Q 经过反相器 Inv₂ 和 TG₂ 反馈回存储节点 X——形成正反馈环，Q 值<strong>被锁死</strong>，不再受 D 的影响。</li>
+</ol>
+
+<p><strong>传输门（Transmission Gate）</strong>由一对互补的 NMOS + PMOS 并联而成（各受 CK 和 CK 控制），保证无论信号电平高低都有一只管导通。单个 NMOS 或 PMOS 作开关会丢失高/低电平的摆幅——传输门完美解决了这个问题。</p>
+
+<h3>D 触发器 = Master + Slave 两级级联</h3>
+
+<p>把两个 D 锁存器串起来，但给它们相反极性的时钟——第一个锁存器在 CK=0 时透明，第二个在 CK=1 时透明——就得到了边沿触发的 D 触发器：</p>
+
+<div class="callout">
+  <div class="callout-title">🔑 上升沿捕获的过程</div>
+  <p><strong>上升沿前（CK=0）：</strong>Master 透明（D → M），Slave 锁存（输出旧 Q）。输入 D 的新值已经"悄悄"传到了中间节点 M。</p>
+  <p><strong>上升沿（CK↑）：</strong>Master 锁存——M 的值被冻结！与此同时 Slave 变透明，把刚冻结的 M 值传到 Q。Q 在这个瞬间更新为 D 在上升沿前的值。</p>
+  <p><strong>上升沿后（CK=1）：</strong>Slave 透明输出，但 Master 已锁存——D 的任何后续变化都到不了 M，Q 保持稳定。</p>
+  <p><strong>关键洞察：</strong>D 触发器实际<em>只在上升沿那一瞬间采样</em>。Master-Slave 结构巧妙地实现了这一点：CK=0 时 Master 准备好数据，CK↑ 时 Slave 输出数据——从外部看，D 在上升沿被"拍了张照"。</p>
+</div>
+
+<h2>2. 反相器的晶体管级实现</h2>
+
+<p>锁存器和触发器都用到了反相器（Inverter）——了解它的晶体管结构有助于理解整体。</p>
+
+<div class="structure-row">
+  <div class="struct-card">
+    <div class="card-head" style="background:var(--surface);color:var(--text);">CMOS 反相器 — 2 个晶体管</div>
+    <div class="card-body">
+      <svg viewBox="0 0 260 190" xmlns="http://www.w3.org/2000/svg">
+        <!-- VDD rail -->
+        <line x1="80" y1="15" x2="180" y2="15" class="sg-wire"/>
+        <text x="200" y="19" class="sg-label-sm">VDD</text>
+
+        <!-- PMOS -->
+        <line x1="130" y1="25" x2="130" y2="15" class="sg-wire"/>
+        <line x1="110" y1="25" x2="150" y2="25" class="sg-wire"/>
+        <line x1="110" y1="80" x2="150" y2="80" class="sg-wire"/>
+        <line x1="110" y1="25" x2="110" y2="80" class="sg-wire"/>
+        <line x1="150" y1="25" x2="150" y2="80" class="sg-wire"/>
+        <!-- PMOS gate -->
+        <line x1="120" y1="55" x2="130" y2="52" class="sg-wire"/>
+        <text x="105" y="58" class="sg-label-sm">G</text>
+        <!-- PMOS label -->
+        <text x="155" y="55" class="sg-label-sm" fill="var(--sidenote)">PMOS</text>
+        <text x="155" y="67" class="sg-label-sm" fill="var(--sidenote)">上管</text>
+
+        <!-- Output Y -->
+        <line x1="130" y1="80" x2="130" y2="95" class="sg-wire"/>
+        <circle cx="130" cy="95" r="3" fill="var(--text)"/>
+        <text x="155" y="100" class="sg-label-b">Y = A̅</text>
+
+        <!-- NMOS -->
+        <line x1="130" y1="100" x2="130" y2="110" class="sg-wire"/>
+        <line x1="110" y1="110" x2="150" y2="110" class="sg-wire"/>
+        <line x1="110" y1="160" x2="150" y2="160" class="sg-wire"/>
+        <line x1="110" y1="110" x2="110" y2="160" class="sg-wire"/>
+        <line x1="150" y1="110" x2="150" y2="160" class="sg-wire"/>
+        <!-- NMOS gate (shared input A) -->
+        <line x1="120" y1="138" x2="130" y2="135" class="sg-wire"/>
+        <text x="105" y="140" class="sg-label-sm">G</text>
+        <text x="155" y="138" class="sg-label-sm" fill="var(--sidenote)">NMOS</text>
+        <text x="155" y="150" class="sg-label-sm" fill="var(--sidenote)">下管</text>
+
+        <!-- GND rail -->
+        <line x1="80" y1="165" x2="180" y2="165" class="sg-wire"/>
+        <text x="200" y="169" class="sg-label-sm">GND</text>
+
+        <!-- Input A -->
+        <line x1="130" y1="52" x2="130" y2="138" class="sg-wire-accent" stroke-dasharray="4 3"/>
+        <line x1="40" y1="90" x2="120" y2="55" class="sg-wire"/>
+        <text x="30" y="93" class="sg-label-b">A</text>
+        <text x="30" y="105" class="sg-label-sm">输入</text>
+
+        <!-- Truth table -->
+        <rect x="270" y="40" width="110" height="110" rx="5" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="325" y="58" class="sg-label-b" text-anchor="middle">真值表</text>
+        <text x="295" y="78" class="sg-label-sm">A = 0 → PMOS 导通</text>
+        <text x="295" y="92" class="sg-label-sm">Y = VDD (1)</text>
+        <text x="295" y="112" class="sg-label-sm">A = 1 → NMOS 导通</text>
+        <text x="295" y="126" class="sg-label-sm">Y = GND (0)</text>
+        <text x="310" y="145" class="sg-label-sm" fill="var(--sidenote)">2 晶体管</text>
+      </svg>
+    </div>
+    <div class="card-stats">仅 2 晶体管 — 数字电路最基本的门</div>
+  </div>
+  <div class="struct-card">
+    <div class="card-head" style="background:var(--surface);color:var(--text);">传输门 (Transmission Gate)</div>
+    <div class="card-body">
+      <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+        <!-- Input side -->
+        <line x1="40" y1="70" x2="80" y2="70" class="sg-wire"/>
+        <text x="30" y="74" class="sg-label-b">IN</text>
+
+        <!-- NMOS -->
+        <line x1="85" y1="55" x2="115" y2="55" class="sg-wire"/>
+        <line x1="85" y1="90" x2="115" y2="90" class="sg-wire"/>
+        <line x1="85" y1="55" x2="85" y2="90" class="sg-wire"/>
+        <line x1="115" y1="55" x2="115" y2="90" class="sg-wire"/>
+        <text x="100" y="50" class="sg-label-sm" text-anchor="middle">NMOS</text>
+        <!-- Short source-drain IN→OUT for NMOS -->
+        <line x1="80" y1="70" x2="85" y2="70" class="sg-wire"/>
+        <line x1="115" y1="70" x2="150" y2="70" class="sg-wire"/>
+        <!-- NMOS gate -->
+        <line x1="100" y1="55" x2="100" y2="35" class="sg-wire"/>
+        <text x="105" y="32" class="sg-label-sm" fill="var(--accent)">CK</text>
+
+        <!-- PMOS (in parallel, above) -->
+        <line x1="85" y1="48" x2="85" y2="30" class="sg-wire"/>
+        <line x1="115" y1="48" x2="115" y2="30" class="sg-wire"/>
+        <line x1="85" y1="48" x2="115" y2="48" class="sg-wire"/>
+        <text x="100" y="40" class="sg-label-sm" text-anchor="middle">PMOS</text>
+        <!-- PMOS gate (inverted) -->
+        <line x1="100" y1="48" x2="100" y2="25" class="sg-wire"/>
+        <circle cx="100" cy="22" r="3" class="sg-bubble"/>
+        <text x="105" y="19" class="sg-label-sm" fill="var(--accent)">CK</text>
+        <!-- Short source-drain for PMOS -->
+        <line x1="80" y1="70" x2="85" y2="42" class="sg-wire"/>
+        <line x1="115" y1="42" x2="150" y2="70" class="sg-wire"/>
+
+        <!-- Body connections -->
+        <text x="125" y="100" class="sg-label-sm">N阱接 VDD</text>
+        <text x="125" y="112" class="sg-label-sm">P阱接 GND</text>
+
+        <!-- Output -->
+        <line x1="150" y1="70" x2="190" y2="70" class="sg-wire"/>
+        <text x="200" y="74" class="sg-label-b">OUT</text>
+
+        <!-- Explanation -->
+        <rect x="30" y="125" width="260" height="50" rx="5" fill="var(--callout-bg)" stroke="var(--callout-border)"/>
+        <text x="160" y="143" class="sg-label-sm" text-anchor="middle">CK=1: NMOS和PMOS都导⑨(互补!)</text>
+        <text x="160" y="157" class="sg-label-sm" text-anchor="middle">无论IN电平高低, 总有管导通→全摆幅通过</text>
+        <text x="160" y="171" class="sg-label-sm" text-anchor="middle">CK=0: 两管都关断→高阻</text>
+      </svg>
+    </div>
+    <div class="card-stats">2 晶体管 (1N+1P) — CMOS模拟开关</div>
+  </div>
+</div>
+
+<h2>3. 综合对比：为什么寄存器比 SRAM 贵</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>属性</th>
+      <th>D 锁存器</th>
+      <th>D 触发器 (寄存器)</th>
+      <th>6T SRAM 单元</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>晶体管数</td>
+      <td>~10–12</td>
+      <td>~20–24</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>触发方式</td>
+      <td>电平敏感（CK=1透明）</td>
+      <td>边沿敏感（CK↑采样）</td>
+      <td>电平敏感（WL=1激活）</td>
+    </tr>
+    <tr>
+      <td>读写端口</td>
+      <td>1 输入 1 输出（独立）</td>
+      <td>1 输入 1 输出（独立）</td>
+      <td>共用 BL（需仲裁）</td>
+    </tr>
+    <tr>
+      <td>是否需要 Sense Amp</td>
+      <td>不需要（反相器直接驱动）</td>
+      <td>不需要（反相器直接驱动）</td>
+      <td>需要（位线电容大）</td>
+    </tr>
+    <tr>
+      <td>访问方式</td>
+      <td>指令直接编码寄存器号</td>
+      <td>指令直接编码寄存器号</td>
+      <td>通过地址总线+译码器</td>
+    </tr>
+    <tr>
+      <td>时钟需求</td>
+      <td>需要 CK（透明/锁存控制）</td>
+      <td>需要 CK（边沿捕获）</td>
+      <td>不需要时钟（异步访问）</td>
+    </tr>
+    <tr>
+      <td>每 bit 面积</td>
+      <td>较大（独立I/O+时钟树）</td>
+      <td>~2× 锁存器</td>
+      <td>~120F²（共享外围电路）</td>
+    </tr>
+    <tr>
+      <td>典型位置</td>
+      <td>时钟门控、总线保持</td>
+      <td>CPU 寄存器文件、流水线</td>
+      <td>Cache 阵列</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">💡 为什么 CPU 只有几十个寄存器而不是几万个？</div>
+  <p>一个 D 触发器 ~24 个晶体管，整个寄存器文件还要加上多端口读写电路（寄存器文件通常需要支持同时 2 读 1 写）。相比之下，一个 SRAM 单元只要 6 个晶体管，外围的 Row/Column Decoder 和 Sense Amp 被整行共享。</p>
+  <p>如果把寄存器扩展到 SRAM 的规模，面积和功耗将爆炸——<strong>这就是"寄存器 ≠ SRAM"的根本原因：它们是同一类电路（都能存 bit），但物理开销差了数量级。</strong></p>
+</div>
+
+<h2>从锁存器到触发器的进化：为什么 CPU 用触发器而不是锁存器？</h2>
+
+<p>这本质上是 <strong>时序设计的安全性 vs 面积成本</strong> 的权衡：</p>
+
+<ul>
+  <li><strong>锁存器问题：</strong>CK=1 期间 D 的任何变化都会传到 Q——如果组合逻辑的输出恰好在 CK=1 期间变化，锁存器的输出会跟着抖动（被称为"时间借用"问题）。在多级流水线中，这导致时序分析极其复杂——必须保证每一级信号在 CK=1 期间稳定。</li>
+  <li><strong>触发器解决方案：</strong>只在上升沿拍一次照，其余时间 Q 稳定不变。这样相邻两级流水线之间不会互相干扰——前一级的输出有整个周期的时间去稳定，下一级只在下一个上升沿采样。时序分析简单得多。</li>
+</ul>
+
+<p>代价就是每个寄存器多用 ~12 个晶体管。现代 CPU 有几百到几千个寄存器（含重命名寄存器），总面积可观，但换来的是可靠的同步设计——这是数字设计中最划算的交易。</p>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM — 术语辨析</a> · <a href="260731_SRAM-array-structure.html">SRAM 阵列结构详解</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

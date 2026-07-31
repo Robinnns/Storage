@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFF 的五种主要结构</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .struct-card {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    margin: 1.4rem 0;
+    overflow: hidden;
+  }
+  .struct-card .card-head {
+    padding: 0.65rem 1rem;
+    font-weight: 700;
+    font-size: 0.92em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .struct-card .card-body {
+    padding: 1rem 1.2rem;
+    font-size: 0.9em;
+    line-height: 1.6;
+  }
+  .struct-card .card-body ul { margin: 0.3rem 0 0 1.2rem; }
+  .struct-card .card-body li { margin: 0.15rem 0; }
+
+  .head-tg     { background: var(--accent-dim); color: var(--accent); }
+  .head-c2mos  { background: #f0f4e8; color: #5a7a3a; }
+  .head-tspc   { background: #fdf3d0; color: #8a6d14; }
+  .head-pulse  { background: #f0e8f4; color: #6a3a7a; }
+  .head-saff   { background: #fce8e8; color: #9a3a3a; }
+
+  .t-count { font-size: 0.82em; color: var(--sidenote); font-weight: 500; }
+  .scene-tag {
+    display: inline-block;
+    font-size: 0.8em;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+
+  /* Summary radar thing — simple bar chart */
+  .bar-compare { margin: 1.5rem 0; font-size: 0.82em; }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0.4rem 0;
+  }
+  .bar-row .bar-label { text-align: right; font-weight: 600; font-size: 0.9em; }
+  .bar-row .bar-track { height: 10px; border-radius: 5px; background: var(--surface); position: relative; overflow: hidden; }
+  .bar-row .bar-fill { height: 100%; border-radius: 5px; }
+  .bar-fill-s { background: var(--success); }
+  .bar-fill-m { background: #e6a817; }
+  .bar-fill-l { background: var(--error); }
+  @media (max-width: 500px) {
+    .bar-row { grid-template-columns: 100px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>DFF 的五种主要结构</h1>
+<p style="color:var(--sidenote);">260801 · <span class="tag">DFF</span><span class="tag">时序电路</span><span class="tag">标准单元</span><span class="tag">高速设计</span></p>
+
+<h2>为什么有多种结构？</h2>
+<p>D 触发器不是只有一种"两个锁存器串起来"。实际芯片中至少有五种主流拓扑，在晶体管数、速度、功耗、抗噪能力上各有权衡。标准单元库里一个"DFF"背后可能是完全不同的晶体管级实现。</p>
+
+<h2>五种结构详解</h2>
+
+<div class="struct-card">
+  <div class="card-head head-tg">
+    <span>1. 传输门主从型 (TG Master-Slave)</span>
+    <span class="t-count">~20–24T</span>
+  </div>
+  <div class="card-body">
+    <p><strong>原理：</strong>CK=0 时 Master 透明（TG₁ 导通，D→X），Slave 锁存（TG₂ 断开）。CK=1 时 Master 锁存（TG₁ 断开），Slave 透明（TG₂ 导通，X→Q）。上升沿采样。</p>
+    <ul>
+      <li>✅ 结构简单，对时钟斜率不敏感，工艺兼容性最好</li>
+      <li>✅ 全静态——没有动态节点，最低频率无下限</li>
+      <li>❌ 晶体管多，时钟负载大（每个 DFF 需 CK 和 CK̅ 驱动 4 个传输门）</li>
+    </ul>
+    <span class="scene-tag">📍 标准单元库主力 — RTL 综合 99% 产出此结构</span>
+  </div>
+</div>
+
+<div class="struct-card">
+  <div class="card-head head-c2mos">
+    <span>2. C²MOS (Clocked CMOS)</span>
+    <span class="t-count">~16–20T</span>
+  </div>
+  <div class="card-body">
+    <p><strong>原理：</strong>用钟控反相器替代传输门——反相器上下各串一个钟控管。CK=1 时前级当普通反相器用，CK=0 时输出高阻。两级钟控反相器 + 正反馈环。</p>
+    <ul>
+      <li>✅ 低电压下比传输门型更可靠（不需 NMOS+PMOS 同时导通）</li>
+      <li>✅ 时钟负载较传输门型小</li>
+      <li>❌ 堆叠晶体管 → 驱动强度下降 → 同等尺寸下更慢</li>
+    </ul>
+    <span class="scene-tag">📍 低电压/近阈值设计 · 高噪声环境</span>
+  </div>
+</div>
+
+<div class="struct-card">
+  <div class="card-head head-tspc">
+    <span>3. TSPC (True Single Phase Clock)</span>
+    <span class="t-count">~8–12T</span>
+  </div>
+  <div class="card-body">
+    <p><strong>原理：</strong><strong>不需要 CK̅ 反相器</strong>——用单一 CK 相位控制预充电和评估。CK=0 时第一级预充电到中间节点；CK=1 时根据 D 决定该节点是否放电，第二级捕捉并输出。</p>
+    <ul>
+      <li>✅ 晶体管数最少，面积最小</li>
+      <li>✅ 时钟负载最低（无 CK̅，无传输门对）</li>
+      <li>❌ 含动态节点——最小时钟频率有下限，噪声容限不如全静态</li>
+    </ul>
+    <span class="scene-tag">📍 高频设计 · 分频器 · 早期 ARM 核数据通路</span>
+  </div>
+</div>
+
+<div class="struct-card">
+  <div class="card-head head-pulse">
+    <span>4. 脉冲锁存型 (Pulse-Triggered Latch)</span>
+    <span class="t-count">~14–18T</span>
+  </div>
+  <div class="card-body">
+    <p><strong>原理：</strong>不搞 Master-Slave。用脉冲发生器把 CK 上升沿变成 100–300ps 窄脉冲 → 直接打开一个 D 锁存器采样 D → 脉冲结束后锁存器自动关闭。等于只付了一个锁存器的面积。</p>
+    <ul>
+      <li>✅ 比 Master-Slave 少一个完整锁存器，面积更小</li>
+      <li>✅ Setup 时间短——适合低延迟路径</li>
+      <li>❌ Hold 时间要求高；脉冲宽度对 PVT（工艺/电压/温度）变异敏感</li>
+    </ul>
+    <span class="scene-tag">📍 高性能处理器关键路径 (Intel Core 系列流水线级)</span>
+  </div>
+</div>
+
+<div class="struct-card">
+  <div class="card-head head-saff">
+    <span>5. 灵敏放大器型 (Sense-Amplifier FF, SAFF)</span>
+    <span class="t-count">~22–28T</span>
+  </div>
+  <div class="card-body">
+    <p><strong>原理：</strong>前端用 Sense Amp 做差分放大（不等满摆幅就判定 D 值），后端用 SR 锁存器保持。和 SRAM 读出的思路一脉相承。</p>
+    <ul>
+      <li>✅ 极短 Clk-to-Q 延迟（Sense Amp 在 ~50mV 差分时就判定）</li>
+      <li>✅ 负建立时间（某些设计中 D 甚至可以在 CK 之后到达）</li>
+      <li>❌ 功耗高、面积大、需差分输入（要互补 D 和 D̅）</li>
+    </ul>
+    <span class="scene-tag">📍 SerDes · 高速 IO 接口 · 时钟树末级 · 超高速定制</span>
+  </div>
+</div>
+
+<h2>综合对比</h2>
+
+<table>
+  <thead>
+    <tr><th>结构</th><th>晶体管</th><th>速度</th><th>功耗</th><th>可靠性</th><th>典型场景</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TG Master-Slave</td><td>20–24</td><td>★★★</td><td>★★★</td><td>★★★★★</td><td>标准单元库主力</td>
+    </tr>
+    <tr>
+      <td>C²MOS</td><td>16–20</td><td>★★★</td><td>★★★★</td><td>★★★★</td><td>低电压、高噪声</td>
+    </tr>
+    <tr>
+      <td>TSPC</td><td>8–12</td><td>★★★★</td><td>★★★★</td><td>★★★</td><td>高频、单相时钟</td>
+    </tr>
+    <tr>
+      <td>Pulse Latch</td><td>14–18</td><td>★★★★★</td><td>★★★★</td><td>★★★</td><td>处理器关键路径</td>
+    </tr>
+    <tr>
+      <td>SAFF</td><td>22–28</td><td>★★★★★</td><td>★★</td><td>★★★★</td><td>SerDes、高速IO</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">💡 实际工作中的意义</div>
+  <p>如果你写 RTL 综合到标准单元库，用的就是 TG Master-Slave。但当你读库文档看到 <code>DFFX1</code>、<code>DFFHQX1</code>、<code>SDFF</code> 这些不同 cell 时，它们背后可能是不同结构——有的加了扫描链（SDFF）、有的优化了 hold 时间（DFFHQ）、有的面积最小（DFFX1）。了解这些结构差异有助于理解为什么选不同 cell 会影响时序收敛。</p>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_latch-flipflop-transistor.html">锁存器与触发器的晶体管级结构</a> · <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

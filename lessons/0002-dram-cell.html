@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 0002 — DRAM 存储单元：1T1C 的巧妙与代价</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  /* Cell comparison — side by side */
+  .cell-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.8rem 0;
+  }
+  @media (max-width: 600px) {
+    .cell-compare { grid-template-columns: 1fr; }
+  }
+  .cell-card {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .cell-card .card-head {
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    font-size: 0.85em;
+    text-align: center;
+  }
+  .cell-card .card-body {
+    padding: 1rem;
+    text-align: center;
+    background: var(--bg);
+  }
+  .cell-card .card-body svg {
+    max-width: 100%;
+    height: auto;
+  }
+  .card-sram .card-head { background: var(--accent-dim); color: var(--accent); }
+  .card-dram .card-head { background: #fdf3d0; color: #8a6d14; }
+
+  /* DRAM read/write cycle */
+  .cycle-steps {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1.2rem 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .cycle-step {
+    flex: 1 1 140px;
+    max-width: 180px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.7rem 0.6rem;
+    text-align: center;
+    font-size: 0.85em;
+    background: var(--surface);
+  }
+  .cycle-step .step-num {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3rem;
+  }
+  .cycle-step .step-title {
+    font-weight: 650;
+    margin-bottom: 0.2rem;
+  }
+  .cycle-step .step-desc {
+    font-size: 0.88em;
+    color: var(--text-muted);
+  }
+
+  /* SVG diagram colors */
+  .d-cap      { fill: #e8ecf0; stroke: var(--text-muted); stroke-width: 1.2; }
+  .d-cap-plate { fill: var(--surface); stroke: var(--text-muted); stroke-width: 1; }
+  .d-cap-charge { fill: var(--accent-dim); stroke: var(--accent); stroke-width: 1.8; }
+  .d-tx        { stroke: var(--text); stroke-width: 1.5; fill: none; }
+  .d-wl        { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+  .d-bl        { stroke: var(--text-muted); stroke-width: 1.5; fill: none; }
+  [data-theme="dark"] .d-cap      { fill: #1e2530; stroke: #8899b0; stroke-width: 1.2; }
+  [data-theme="dark"] .d-cap-plate { fill: #182232; stroke: #8899b0; stroke-width: 1; }
+</style>
+</head>
+<body>
+
+<div class="lesson-nav">
+  <a class="prev" href="0001-memory-hierarchy.html">← 上一课</a>
+  <span class="lesson-meta">Lesson 0002 · 2026-07-31</span>
+  <span class="next" style="visibility:hidden">下一课 →</span>
+</div>
+
+<h1>DRAM 存储单元<br><span style="font-weight:400;font-size:0.7em;color:var(--sidenote)">1T1C 的巧妙与代价</span></h1>
+
+<div class="callout">
+  <div class="callout-title">🎯 本课目标</div>
+  <p style="margin:0.3rem 0">理解 1T1C DRAM 单元的工作原理、为什么读取是"破坏性"的、为什么 DRAM 需要刷新——这三个问题是理解 DDR 接口一切行为的起点。</p>
+</div>
+
+<h2>先看对比：SRAM vs DRAM 单元</h2>
+
+<div class="cell-compare">
+  <div class="cell-card card-sram">
+    <div class="card-head">SRAM — 6T 单元</div>
+    <div class="card-body">
+      <svg viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- 6T SRAM simplified -->
+        <text x="120" y="14" text-anchor="middle" font-size="9" fill="var(--sidenote)" font-family="Inter,sans-serif">上一课的主角</text>
+        <!-- Two inverters cross-coupled -->
+        <circle cx="80" cy="60" r="18" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="1.2"/>
+        <text x="80" y="64" text-anchor="middle" font-size="8" fill="var(--text)" font-family="Inter,sans-serif">Inv1</text>
+        <circle cx="160" cy="60" r="18" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="1.2"/>
+        <text x="160" y="64" text-anchor="middle" font-size="8" fill="var(--text)" font-family="Inter,sans-serif">Inv2</text>
+        <!-- Cross coupling -->
+        <line x1="95" y1="55" x2="145" y2="55" stroke="var(--text)" stroke-width="1"/>
+        <line x1="145" y1="65" x2="95" y2="65" stroke="var(--text)" stroke-width="1"/>
+        <!-- Storage labels -->
+        <text x="60" y="50" font-size="8" fill="var(--accent)" font-family="Inter,sans-serif">Q</text>
+        <text x="170" y="50" font-size="8" fill="var(--text-muted)" font-family="Inter,sans-serif">Q̅</text>
+        <!-- Access transistors -->
+        <line x1="80" y1="80" x2="80" y2="105" stroke="var(--text)" stroke-width="1.5"/>
+        <line x1="160" y1="80" x2="160" y2="105" stroke="var(--text)" stroke-width="1.5"/>
+        <text x="65" y="112" font-size="8" fill="var(--accent)" font-family="Inter,sans-serif">WL</text>
+        <text x="40" y="130" font-size="7" fill="var(--sidenote)" font-family="Inter,sans-serif">BL</text>
+        <text x="190" y="130" font-size="7" fill="var(--sidenote)" font-family="Inter,sans-serif">BL̅</text>
+        <!-- Bottom connections -->
+        <circle cx="80" cy="112" r="3" fill="var(--accent)"/>
+        <circle cx="160" cy="112" r="3" fill="var(--accent)"/>
+        <line x1="80" y1="112" x2="40" y2="135" stroke="var(--text-muted)" stroke-width="1"/>
+        <line x1="160" y1="112" x2="195" y2="135" stroke="var(--text-muted)" stroke-width="1"/>
+        <!-- Stats -->
+        <rect x="50" y="142" width="140" height="16" rx="4" fill="var(--accent-dim)"/>
+        <text x="120" y="153" text-anchor="middle" font-size="8" fill="var(--accent)" font-family="Inter,sans-serif" font-weight="600">6 晶体管 · ~120F² · 静态保持</text>
+      </svg>
+    </div>
+  </div>
+  <div class="cell-card card-dram">
+    <div class="card-head">DRAM — 1T1C 单元</div>
+    <div class="card-body">
+      <svg viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg">
+        <text x="120" y="14" text-anchor="middle" font-size="9" fill="var(--sidenote)" font-family="Inter,sans-serif">本课的主角</text>
+        <!-- Capacitor symbol -->
+        <rect x="130" y="30" width="4" height="55" rx="2" class="d-cap-plate" stroke="var(--text-muted)" stroke-width="1.5"/>
+        <rect x="140" y="30" width="4" height="55" rx="2" class="d-cap-plate" stroke="var(--text-muted)" stroke-width="1.5"/>
+        <text x="137" y="98" text-anchor="middle" font-size="7" fill="var(--text-muted)" font-family="Inter,sans-serif">C</text>
+        <!-- Storage node label -->
+        <text x="118" y="50" font-size="8" fill="var(--accent)" font-family="Inter,sans-serif">存储节②</text>
+        <!-- Transistor -->
+        <line x1="134" y1="85" x2="100" y2="85" stroke="var(--text)" stroke-width="1.5"/>
+        <circle cx="97" cy="85" r="4" fill="none" stroke="var(--text)" stroke-width="1.5"/>
+        <line x1="97" y1="85" x2="97" y2="112" stroke="var(--text)" stroke-width="1.5"/>
+        <circle cx="97" cy="115" r="3" fill="var(--accent)"/>
+        <text x="70" y="80" font-size="8" fill="var(--accent)" font-family="Inter,sans-serif">WL 栅极</text>
+        <line x1="97" y1="112" x2="60" y2="140" stroke="var(--text-muted)" stroke-width="1"/>
+        <text x="40" y="148" font-size="7" fill="var(--sidenote)" font-family="Inter,sans-serif">BL (位线)</text>
+        <!-- Leakage arrow -->
+        <line x1="148" y1="55" x2="165" y2="70" stroke="var(--error)" stroke-width="0.8" stroke-dasharray="3 2"/>
+        <text x="170" y="75" font-size="6.5" fill="var(--error)" font-family="Inter,sans-serif">漏电!</text>
+        <!-- Stats -->
+        <rect x="50" y="142" width="140" height="16" rx="4" fill="#fdf3d0"/>
+        <text x="120" y="153" text-anchor="middle" font-size="8" fill="#8a6d14" font-family="Inter,sans-serif" font-weight="600">1 晶体管 + 1 电容 · ~6F² · 需刷新</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<p style="text-align:center;font-size:0.85em;color:var(--sidenote);">图1：6T SRAM vs 1T1C DRAM。从 6 个晶体管到 1 个晶体管 + 1 个电容，面积缩小约 20 倍，但付出了"破坏性读取"和"需要刷新"的代价。</p>
+
+<h2>1T1C 是怎么存一个 bit 的？</h2>
+
+<p>原理极其简单：</p>
+
+<ul>
+  <li><strong>T（晶体管）</strong>是一个开关。WL 拉高 → 开关导通 → 位线 BL 和电容 C 连通。WL 拉低 → 开关断开 → 电容被隔离。</li>
+  <li><strong>C（电容）</strong>是存储介质。电容上有电荷 → 电压高 → 存的是 "1"。电容上没电荷 → 电压低 → 存的是 "0"。</li>
+</ul>
+
+<p><strong>写操作：</strong> WL 导通 → BL 上的电压直接对电容充电（写1）或放电（写0）→ WL 断开 → 电荷困在电容上 → bit 存好了。</p>
+
+<p><strong>读操作</strong>——这才是 DRAM 最反直觉的地方：</p>
+
+<div class="callout">
+  <div class="callout-title">⚠️ DRAM 读取是破坏性的</div>
+  <p>读的时候：WL 导通 → 电容上的电荷 <strong>分享</strong> 给位线的寄生电容。位线本身有几百 fF 的电容，而存储电容只有 ~20-30 fF。电荷一分享，存储电容上的电压就变了——原来存的 bit 在读取的瞬间被<strong>破坏了</strong>。</p>
+  <p style="margin-bottom:0.4rem;">因此每个 DRAM 读操作<strong>必须紧跟一个写回（Write-Back）</strong>：Sense Amp 判定出 0 还是 1 之后，立即把完整的电压写回电容，恢复原始数据。</p>
+</div>
+
+<h2>一个 DRAM 读周期的完整步骤</h2>
+
+<div class="cycle-steps">
+  <div class="cycle-step">
+    <div class="step-num">Step 1</div>
+    <div class="step-title">预充电 (Precharge)</div>
+    <div class="step-desc">位线 BL 充到 VDD/2，准备接收信号</div>
+  </div>
+  <div class="cycle-step">
+    <div class="step-num">Step 2</div>
+    <div class="step-title">字线激活 (ACT)</div>
+    <div class="step-desc">WL 拉高，电容电荷分享到位线上</div>
+  </div>
+  <div class="cycle-step">
+    <div class="step-num">Step 3</div>
+    <div class="step-title">灵敏放大 (Sense)</div>
+    <div class="step-desc">Sense Amp 检测微小电压差，放大到满摆幅</div>
+  </div>
+  <div class="cycle-step">
+    <div class="step-num">Step 4</div>
+    <div class="step-title">写回 (Restore)</div>
+    <div class="step-desc">放大后的电压自动写回电容，恢复原始数据</div>
+  </div>
+</div>
+
+<p>注意：Step 3 和 Step 4 是 Sense Amp 自动完成的——Sense Amp 把微弱差分信号拉到满摆幅后，因为 WL 还开着，<strong>满摆幅电压自然就写回了电容</strong>。这并不是一个额外的命令，而是电路的自然行为。</p>
+
+<h2>为什么 DRAM 需要刷新？</h2>
+
+<p>DRAM 电容只有 ~20-30 fF——这是一个极小的值。电容上的电荷会通过以下路径泄漏：</p>
+<ul>
+  <li>访问晶体管在关断状态下的亚阈值漏电流</li>
+  <li>电容介质本身的泄漏</li>
+  <li>PN 结反向漏电</li>
+</ul>
+
+<p>典型泄漏速率：电容上的电压在 <strong>64ms 内</strong>衰减到不可靠的水平。所以 DRAM 标准规定：<strong>每一行必须在 64ms（或 32ms）内至少被刷新一次</strong>。</p>
+
+<div class="callout">
+  <div class="callout-title">🔑 刷新 = 做一次"假读"</div>
+  <p>刷新操作本质上就是激活一行（WL 拉高），让 Sense Amp 把那一行的数据读出并写回——但不把数据送到 I/O 引脚。JEDEC DDR 标准中这就是 <strong>REF（Refresh）命令</strong>。每发一次 REF，控制器内部计数器指向的行被刷新，然后计数器自动+1。</p>
+</div>
+
+<h2>SRAM vs DRAM：为什么两者都无法替代对方</h2>
+
+<table>
+  <thead>
+    <tr><th>属性</th><th>SRAM (6T)</th><th>DRAM (1T1C)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>单元晶体管数</td><td>6</td><td>1（+电容）</td></tr>
+    <tr><td>单元面积</td><td>~120F²</td><td>~6F²（约20倍密度优势）</td></tr>
+    <tr><td>读取方式</td><td>非破坏性（锁存器驱动位线）</td><td>破坏性（电容电荷分享后需写回）</td></tr>
+    <tr><td>是否需要刷新</td><td>不需要（交叉耦合反相器自动保持）</td><td>需要（电容漏电，~64ms刷新间隔）</td></tr>
+    <tr><td>读取延迟</td><td>~0.5–2ns</td><td>~10–20ns (行周期~45ns)</td></tr>
+    <tr><td>待机功耗</td><td>较高（漏电流 × 6T/cell）</td><td>较低但加刷新功耗</td></tr>
+    <tr><td>逻辑工艺兼容</td><td>完全兼容标准 CMOS</td><td>需要特殊电容结构，增加掩模步骤</td></tr>
+    <tr><td>内部结构</td><td>差分 BL 对（BL + BL̅）</td><td>单端 BL（只有一条位线）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>单端 vs 差分位线：</strong>SRAM 用 BL + BL̅ 差分对，因为 6T 单元的 Q 和 Q̅ 天然互补，差分信号摆幅大、抗噪声。DRAM 只有一条 BL，因为 1T1C 单元只有一个存储节点——Sense Amp 比较 BL 电压和一个参考电压（通常是 VDD/2）来判断 0 还是 1。单端意味着噪声容限更差，但省了一半的位线面积。</p>
+
+<h2>对你的工作的影响</h2>
+
+<p>作为系统集成工程师，1T1C 的两个特性直接决定了你会在 DDR 接口中看到的行为：</p>
+<ol>
+  <li><strong>破坏性读取 → 行周期（Row Cycle Time, tRC）</strong>：读完必须写回，所以从激活一行到能激活下一行之间存在最小时间间隔 tRC = tRAS + tRP。这是 DDR 时序的核心参数。</li>
+  <li><strong>需要刷新 → REF 命令 → 延迟抖动</strong>：DDR 控制器必须定期发 REF 命令。在刷新期间，所有 Bank 都不能访问——这导致你测到的访问延迟不是恒定的，而是周期性地出现尖峰（刷新开销通常占 ~3-8% 的总带宽）。</li>
+</ol>
+
+<h2>📝 检索练习</h2>
+
+<div class="quiz" id="q1">
+  <div class="quiz-question">Q1: DRAM 的 1T1C 单元由什么组成？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q1" data-a="0">A. 1 个晶体管和 1 个交叉耦合反相器对</div>
+    <div class="quiz-option" data-q="q1" data-a="1">B. 1 个晶体管和 1 个电容</div>
+    <div class="quiz-option" data-q="q1" data-a="2">C. 1 个晶体管、1 个电容和 1 个电阻</div>
+    <div class="quiz-option" data-q="q1" data-a="3">D. 1 个浮栅晶体管和 1 个控制栅</div>
+  </div>
+  <div class="quiz-feedback" id="q1-fb"></div>
+</div>
+
+<div class="quiz" id="q2">
+  <div class="quiz-question">Q2: 为什么说 DRAM 读取是"破坏性"的？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q2" data-a="0">A. 读取时 WL 断开，电容上的电荷全部流失</div>
+    <div class="quiz-option" data-q="q2" data-a="1">B. 电容电荷与位线寄生电容分享，改变了存储电压</div>
+    <div class="quiz-option" data-q="q2" data-a="2">C. Sense Amp 的输入阻抗太低，吸收了电容电荷</div>
+    <div class="quiz-option" data-q="q2" data-a="3">D. 位线预充电电压烧毁了存储电容的介质</div>
+  </div>
+  <div class="quiz-feedback" id="q2-fb"></div>
+</div>
+
+<div class="quiz" id="q3">
+  <div class="quiz-question">Q3: DRAM 刷新间隔通常是多少？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q3" data-a="0">A. 6.4ms</div>
+    <div class="quiz-option" data-q="q3" data-a="1">B. 32µs</div>
+    <div class="quiz-option" data-q="q3" data-a="2">C. 64ms</div>
+    <div class="quiz-option" data-q="q3" data-a="3">D. 640us</div>
+  </div>
+  <div class="quiz-feedback" id="q3-fb"></div>
+</div>
+
+<div class="quiz" id="q4">
+  <div class="quiz-question">Q4: 为什么 SRAM 不需要刷新而 DRAM 需要？</div>
+  <div class="quiz-options">
+    <div class="quiz-option" data-q="q4" data-a="0">A. SRAM 使用浮栅存储电荷，不会泄漏</div>
+    <div class="quiz-option" data-q="q4" data-a="1">B. SRAM 的 6T 交叉耦合反相器形成正反馈环，自动维持状态</div>
+    <div class="quiz-option" data-q="q4" data-a="2">C. SRAM 单元面积大，电容也大，泄漏更慢</div>
+    <div class="quiz-option" data-q="q4" data-a="3">D. SRAM 有内置的刷新电路</div>
+  </div>
+  <div class="quiz-feedback" id="q4-fb"></div>
+</div>
+
+<h2>📖 推荐阅读</h2>
+<ul>
+  <li><strong>必读：</strong> <a href="https://www.micron.com/support/~/media/micron/repository/products/technical-note/dram/tn4007_ddr4_basics.pdf">Micron TN-40-07: DDR4 Basics</a> — 第 2 章 "DRAM Operation" 从工业视角解释 1T1C 和刷新。</li>
+  <li><strong>深入：</strong> Jacob, Wang, Ng — <em>Memory Systems</em>, 第 8 章 "DRAM Device Organization: Basic Circuits and Architecture"。</li>
+</ul>
+
+<h2>🧭 下一课预告</h2>
+<p>理解了 DRAM 单元之后，下一课我们进入 <strong>DDR 接口的世界</strong>——ACTIVATE、READ、WRITE、PRECHARGE、REFRESH 这些命令到底长什么样？时序参数 tRCD、tCL、tRAS、tRP 是什么意思？读完 DDR 的 datasheet 从哪儿开始？</p>
+
+<div class="lesson-footer">
+  <p><strong>参考文档：</strong> <a href="../reference/memory-technology-comparison.html">存储器技术对比速查表</a></p>
+  <p><strong>相关笔记：</strong> <a href="../knowledges/260731_SRAM-array-structure.html">SRAM 阵列结构详解</a> · <a href="../knowledges/260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM</a></p>
+  <p><strong>有疑问？</strong> 在对话中直接问我——DRAM 的 sense amp 时序、读写周期、或者任何 DDR 相关问题都行。</p>
+  <p style="margin-top:0.8rem;"><span class="tag">#DRAM</span><span class="tag">#1T1C</span><span class="tag">#refresh</span><span class="tag">#SRAM</span></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 1, good: "正确！1T1C = 1 Transistor + 1 Capacitor。晶体管做开关，电容做存储介质。", bad: "DRAM 单元是 1T1C——1 个晶体管做开关 + 1 个电容存电荷。SRAM 是 6T，NAND Flash 是浮栅晶体管。" },
+    q2: { correct: 1, good: "对了！存储电容只有 ~20-30fF，而位线寄生电容几百 fF。WL 导通后电荷分享，存储节点电压被位线电容稀释——Sense Amp 判定后必须写回。", bad: "关键原因是电荷分享。存储电容远小于位线电容（20fF vs 几百 fF），连通后存储节点电压被大幅改变。因此 Sense Amp 在判定后必须把完整电压写回电容。" },
+    q3: { correct: 2, good: "正确！JEDEC 标准规定 DRAM 所有行必须在 64ms 内至少刷新一次。工业级和车规级可能要求 32ms。", bad: "标准刷新间隔是 64ms（tREFI = 7.8µs 每行 × 8192 行 ≈ 64ms）。高温或车规级可能更短（32ms 或 16ms）。" },
+    q4: { correct: 1, good: "正确！6T SRAM 的四个晶体管构成交叉耦合反相器——正反馈环路只要不掉电就能永远维持状态。DRAM 的电容没有这种有源反馈，电荷只能慢慢泄漏。", bad: "关键是交叉耦合反相器的正反馈。SRAM 的存储节点被有源器件（反相器）持续驱动，不掉电就不会丢。DRAM 靠电容上孤立的电荷存储，没有有源维持机制。" }
+  };
+
+  document.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q;
+      const fb = document.getElementById(qid + '-fb');
+      const opts = document.querySelectorAll(`[data-q="${qid}"]`);
+      const ans = answers[qid];
+      if (fb.classList.contains('show')) return;
+      opts.forEach(o => o.classList.remove('selected', 'correct', 'wrong'));
+      this.classList.add('selected');
+      if (parseInt(this.dataset.a) === ans.correct) {
+        this.classList.add('correct');
+        fb.className = 'quiz-feedback show good';
+        fb.textContent = '✓ ' + ans.good;
+      } else {
+        this.classList.add('wrong');
+        fb.className = 'quiz-feedback show bad';
+        fb.textContent = '✗ ' + ans.bad;
+        opts.forEach(o => { if (parseInt(o.dataset.a) === ans.correct) o.classList.add('correct'); });
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
