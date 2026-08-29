@@ -1,7 +1,7 @@
 // ============================================================
 // 点灯工程 — 仿真 testbench
 // 用法: 在 Vivado 中 Add Sources → Add Simulation Sources 添加
-//       (或在 Windows 上用 Icarus 仿真: iverilog -o tb top.v tb_top.v)
+//       (或在 Windows 上用 Icarus 仿真, 见 eda/iverilog/scripts/run_sim.bat)
 // ============================================================
 
 `timescale 1ns / 1ps
@@ -21,6 +21,14 @@ module tb_top;
         .led1    (led1),
         .led2    (led2)
     );
+
+    // VCD 波形导出 (仅 Icarus 仿真启用, Vivado xsim 不受影响)
+`ifdef DUMP_VCD
+    initial begin
+        $dumpfile("top_tb.vcd");
+        $dumpvars(0, tb_top);
+    end
+`endif
 
     // 50MHz 时钟生成 (周期 20ns)
     always #10 clk_50m = ~clk_50m;

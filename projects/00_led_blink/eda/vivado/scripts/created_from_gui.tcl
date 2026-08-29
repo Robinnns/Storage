@@ -27,7 +27,7 @@
 #
 # 3. The following remote source files that were added to the original project:-
 #
-#    "E:/Local/Project/RobinsProject/Storage/projects/00_led_blink/src/top.v"
+#    "E:/Local/Project/RobinsProject/Storage/projects/00_led_blink/rtl/top.v"
 #    "E:/Local/Project/RobinsProject/Storage/projects/00_led_blink/fpga/a7_lite/a7_lite.xdc"
 #
 #*****************************************************************************************
@@ -36,7 +36,7 @@
 proc checkRequiredFiles { origin_dir} {
   set status true
   set files [list \
- "[file normalize "$origin_dir/src/top.v"]"\
+ "[file normalize "$origin_dir/rtl/top.v"]"\
  "[file normalize "$origin_dir/fpga/a7_lite/a7_lite.xdc"]"\
   ]
   foreach ifile $files {
@@ -153,7 +153,7 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 set files [list \
- [file normalize "${origin_dir}/src/top.v"] \
+ [file normalize "${origin_dir}/rtl/top.v"] \
 ]
 add_files -norecurse -fileset $obj $files
 

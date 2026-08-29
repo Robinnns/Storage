@@ -2,7 +2,7 @@
 # create_project.tcl — 一键创建 00_led_blink Vivado 工程
 #
 # 设计思路:
-#   - 源码 (src/ sim/ fpga/) 由 macOS 编写、提交 git
+#   - 源码 (rtl/ tb/ fpga/) 由 macOS 编写、提交 git
 #   - 本脚本用【相对路径】引用这些外部文件, 不复制进工程
 #   - 工程实体生成在 eda/vivado/workspace/ (已被 .gitignore 忽略)
 #   - 因此换机器/换路径都能一键重建, 无需提交 .xpr
@@ -34,13 +34,13 @@ puts "==> 器件: $part"
 create_project $proj_name [file join $script_dir .. workspace] -part $part
 
 # 2) 添加 RTL 源码
-add_files -norecurse [file join $root_dir src top.v]
+add_files -norecurse [file join $root_dir rtl top.v]
 
 # 3) 添加板级约束 (fpga/a7_lite/)
 add_files -fileset constrs_1 -norecurse [file join $root_dir fpga a7_lite a7_lite.xdc]
 
-# 4) 添加仿真源文件 (sim/)
-add_files -fileset sim_1 -norecurse [file join $root_dir sim tb_top.v]
+# 4) 添加仿真源文件 (tb/)
+add_files -fileset sim_1 -norecurse [file join $root_dir tb tb_top.v]
 
 # 5) 设置顶层模块
 set_property top top [current_fileset]
