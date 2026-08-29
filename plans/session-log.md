@@ -10,6 +10,14 @@
 - **待办（用户侧）：** Windows 装 Vivado 2021.1 + Git；下载板卡原理图核对引脚；确认 EEPROM 型号
 - **下次：** 用户同步仓库到 Windows → 建 Vivado 工程 → 行为仿真 → 生成 bitstream → 下载验证
 
+## 2026-08-30 | 🎉 阶段 0 里程碑：点灯成功
+- 目录重命名 `src→rtl`、`sim→tb`（更符合业界惯例）
+- 新增 `eda/iverilog/` 轻量仿真工作流（run_sim.bat + 详细 README + VCD 条件编译）
+- 复位改用厂家专用 `RESET(L18)`；厂家 xdc 归档为 `a7_lite_official.xdc` 并 gitignore
+- **上板下载成功，LED1/LED2 交替闪烁 ✅**
+- `_template` 已同步 rtl/tb 命名 + iverilog 骨架
+- **待办：** UART 串口 "Hello"；EEPROM 型号丝印；进入阶段 1（组合逻辑 → LUT）
+
 ## 2026-08-29 | 决策：.xpr 不入库，手动体验后导出脚本
 - 讨论 `.xpr` 本质（XML 工程索引，不含源码）与 Vivado 相对路径机制（PATH_MODE / Enable relative paths，跨盘符失效）
 - 用户选择：手动建工程体验一次 → `write_project_tcl` 导出 TCL → 日常仍用 `create_project.tcl` 自动化

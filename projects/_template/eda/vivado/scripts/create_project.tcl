@@ -29,14 +29,14 @@ puts "==> 顶层模块: $top_module"
 # 1) 创建工程 (实体目录: eda/vivado/workspace/)
 create_project $proj_name [file join $script_dir .. workspace] -part $part
 
-# 2) 添加 RTL 源码 (src/ 下所有 .v, 按需增删)
-add_files -norecurse [file glob [file join $root_dir src *.v]]
+# 2) 添加 RTL 源码 (rtl/ 下所有 .v, 按需增删)
+add_files -norecurse [file glob [file join $root_dir rtl *.v]]
 
 # 3) 添加板级约束 (改为你的板卡 BSP 路径)
 add_files -fileset constrs_1 -norecurse [file join $root_dir fpga a7_lite a7_lite.xdc]
 
-# 4) 添加仿真源文件 (sim/ 下所有 .v)
-add_files -fileset sim_1 -norecurse [file glob [file join $root_dir sim *.v]]
+# 4) 添加仿真源文件 (tb/ 下所有 .v)
+add_files -fileset sim_1 -norecurse [file glob [file join $root_dir tb *.v]]
 
 # 5) 设置顶层模块
 set_property top $top_module [current_fileset]

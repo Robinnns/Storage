@@ -69,15 +69,19 @@
 - **工程目录结构（统一约定）：**
   ```
   NN_xxx/
-  ├── src/             RTL 源码            ← 与板卡/工具解耦, git 提交
-  ├── sim/             testbench           ← git 提交
+  ├── rtl/             RTL 源码            ← 与板卡/工具解耦, git 提交
+  ├── tb/              testbench           ← git 提交
   ├── fpga/<板卡名>/    板卡 BSP 层          ← xdc/pinmap/README, git 提交
-  ├── eda/vivado/
-  │   ├── scripts/     TCL 自动化脚本       ← create_project.tcl 等, git 提交
-  │   └── workspace/   Vivado 工程实体      ← Windows 生成, gitignore
+  ├── eda/
+  │   ├── vivado/
+  │   │   ├── scripts/ TCL 自动化脚本       ← create_project.tcl 等, git 提交
+  │   │   └── workspace/ Vivado 工程实体    ← Windows 生成, gitignore
+  │   └── iverilog/
+  │       ├── scripts/ run_sim.bat         ← 轻量仿真, git 提交
+  │       └── workspace/ 仿真产物           ← gitignore
   └── doc/             工程笔记/截图
   ```
-- **解耦原则：** `src/` `sim/` 不依赖任何板卡和工具；换板卡只动 `fpga/`，换工具链只动 `eda/`。
+- **解耦原则：** `rtl/` `tb/` 不依赖任何板卡和工具；换板卡只动 `fpga/`，换工具链只动 `eda/`。
 - **工程创建：** 不手动点 GUI、不提交 `*.xpr`——在 Windows 上 `source eda/vivado/scripts/create_project.tcl` 一键重建（脚本用相对路径引用外部源码）。
 - **首次体验：** 想体验手动建工程时，建完后用 `write_project_tcl -force -no_copy_sources -paths_relative_to <工程根> <输出.tcl>` 导出为脚本，作为该工程的自动化方案。
 - **提交注意：** Vivado 生成物已在根 `.gitignore` 忽略（`.runs/` `.cache/` `.gen/` `*.xpr` `*.bit` 等），只提交源码、约束、脚本。请勿 `git add -f` 强制添加生成物。
