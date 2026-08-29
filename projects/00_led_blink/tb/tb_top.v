@@ -54,7 +54,7 @@ module tb_top;
     end
 
     // 打印每 200ns 的状态, 便于观察
-    initial begin
+    initial begin : print_status
         integer i;
         for (i = 0; i < 15; i = i + 1) begin
             #200;
