@@ -21,8 +21,8 @@
 
 ## 阶段 0 · 环境搭建 ⏳ 0.5 周
 
-- [ ] 安装 Vivado 2021.1（板卡官方推荐版本）
-- [ ] 下载板卡约束文件（MicroPhase/fpga-docs）
+- [x] 安装 Vivado 2021.1（板卡官方推荐版本）
+- [x] 下载板卡约束文件（MicroPhase/fpga-docs）
 - [ ] 创建第一个工程，点亮板载 LED（D6/D5）
 - [ ] 跑通 USB-UART（CH340），串口打印 "Hello"
 
