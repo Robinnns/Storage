@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git 双环境并行开发 — 机制与常用流程</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .summary-table td:first-child { font-weight: 700; white-space: nowrap; }
+  .git-tree {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    overflow-x: auto;
+    margin: 0.8rem 0;
+  }
+  .git-tree .hl { color: var(--accent); font-weight: 700; }
+  .cmd-list code { background: var(--accent-dim); padding: 0.1em 0.4em; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>Git 双环境并行开发 — 机制与常用流程</h1>
+<p style="color:var(--sidenote);">260829 · <span class="tag">git</span><span class="tag">双环境</span><span class="tag">工作流</span><span class="tag">merge</span><span class="tag">rebase</span><span class="tag">同步</span></p>
+
+<div class="principle-callout">
+  <h3>🔑 核心心智模型</h3>
+  <p><strong>git 是分布式的——你本地看不到远程实时状态。</strong> `origin/main` 只是一个"书签"，记录上次 fetch 时远程的样子。所有同步的本质：<strong>改完即 push + 对端 pull</strong>，通过共同基线让两端历史会师。</p>
+</div>
+
+<h2>1. 场景：两套环境并行</h2>
+<p><strong>macOS</strong>（写 RTL/约束/笔记）↔ GitHub 仓库 ↔ <strong>Windows</strong>（跑 Vivado：仿真/综合/下载）。两端都往同一个 <code>main</code> 分支提交。关键前提：Vivado 生成物（<code>.xpr</code> <code>.bit</code> <code>.runs/</code>）已在 <code>.gitignore</code> 忽略——git 只同步"设计决策"，不同步"机器状态"。</p>
+
+<h2>2. 两个心智模型</h2>
+
+<h3>① 书签模型：origin / origin/main / origin/HEAD</h3>
+<table class="summary-table">
+  <thead><tr><th>术语</th><th>是什么</th><th>什么时候动</th><th>能改吗</th></tr></thead>
+  <tbody>
+    <tr><td>origin</td><td>远程仓库的本地别名（指向 URL）</td><td>remote set-url 时</td><td>改地址</td></tr>
+    <tr><td>origin/main</td><td>远程 main 的"书签"（远程跟踪指针）</td><td><code>fetch</code>/<code>pull</code> 时</td><td>⛔ 只读</td></tr>
+    <tr><td>main</td><td>你的本地工作分支</td><td><code>commit</code> 时</td><td>✅</td></tr>
+  </tbody>
+</table>
+<p><code>git status</code> 的 "up to date / ahead / behind" 全是拿本地 main 对比 <strong>书签</strong>算出来的——书签没刷新，status 就是"过时的真相"。</p>
+
+<h3>② 三区模型</h3>
+<div class="git-tree">
+工作区（磁盘） ──<span class="hl">git add</span>──▶ 暂存区 Index ──<span class="hl">git commit</span>──▶ 仓库 HEAD
+   修改在这里                待提交清单（可分批打包）          固化进历史
+</div>
+<p>commit 只固化"暂存区清单"，不是收走全部工作区改动。反悔用 <code>git restore --staged &lt;文件&gt;</code>。</p>
+
+<h2>3. 标准同步流程</h2>
+<pre class="git-tree">
+# ── A 机（如 macOS）工作结束 ──
+git add &lt;要共享的文件&gt;      # 精确 add，别 git add .
+git commit -m "描述改动"
+git push
+
+# ── B 机（如 Windows）开工前（先设一次默认）──
+git config pull.rebase false   # 分叉时默认用 merge（保留合并提交）
+git pull                       # = fetch（刷新书签）+ merge
+</pre>
+
+<h2>4. 分叉的三种命运（核心机制）</h2>
+<p>当两端各有提交、互不为祖先（status 显示 <code>[ahead N, behind M]</code>），git 无法直接同步，三种协调方式：</p>
+
+<table class="summary-table">
+  <thead><tr><th>方式</th><th>机制</th><th>历史形状</th><th>合并提交</th><th>改 hash？</th></tr></thead>
+  <tbody>
+    <tr><td>fast-forward</td><td>本地是远程祖先，指针直推</td><td>直线</td><td>无</td><td>否</td></tr>
+    <tr><td>merge</td><td>找共同祖先，把两线绑在合并提交上</td><td>保留 Y</td><td>有</td><td>否</td></tr>
+    <tr><td>rebase</td><td>把本地提交"换基"重放到远程之上</td><td>抹平 Y 变直线</td><td>无</td><td><strong>是</strong></td></tr>
+  </tbody>
+</table>
+
+<p><strong>rebase 为什么改 hash？</strong> 提交 hash = f(内容, 父提交, 时间戳, 作者, message)。父变了 hash 就变——"重写历史"的含义。因此铁律：<strong>已推送的提交绝不 rebase</strong>（否则对端还留着旧 hash，历史分裂成平行宇宙）。rebase 只用于本地未推送的提交。</p>
+
+<h2>5. 本次实战回放（真实 hash）</h2>
+<p>macOS 与 Windows 各自提交、分叉自共同祖先 <code>faa7ef3</code>：</p>
+<div class="git-tree">
+*   4877331 Merge branch 'main'   ← 合并提交（ort 策略自动合并，零冲突）
+|\
+| * b26dda9 新增tcl              ← Windows（含 created_from_gui.tcl 514 行）
+* | 4653917 新增知识点...         ← macOS（Xilinx 器件命名规则）
+|/
+* faa7ef3 更改图片命名格式        ← 共同祖先（merge base）
+</div>
+<ol>
+  <li><code>git fetch</code>：书签 faa7ef3 → b26dda9，status 从 "up to date" 变 "behind 1"</li>
+  <li><code>git commit</code>：本地 main → 4653917，历史分叉（ahead 1, behind 1）</li>
+  <li><code>git pull --no-rebase</code>：merge 找共同祖先，文件不重叠 → 自动生成合并提交 4877331</li>
+  <li><code>git push</code>：远程 b26dda9 → 4877331 快进，两端一致</li>
+</ol>
+<p>零冲突的关键：两端改的文件不重叠（macOS 改 <code>knowledges/</code>，Windows 加 <code>created_from_gui.tcl</code>）。</p>
+
+<h2>6. 冲突处理</h2>
+<pre class="git-tree">
+git pull   # 报冲突
+git status # 找冲突文件
+# 打开文件，删掉标记行手动合并:
+#   &lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD      ← 你的版本
+#   =======               ← 分隔
+#   &gt;&gt;&gt;&gt;&gt;&gt;&gt; 远程       ← 对方版本
+git add &lt;文件&gt;
+git commit -m "resolve conflict"
+git push
+# 或以某一方为准: git checkout --ours / --theirs &lt;文件&gt;
+</pre>
+
+<h2>7. 常用命令速查</h2>
+<table class="summary-table">
+  <thead><tr><th>命令</th><th>作用</th><th>时机</th></tr></thead>
+  <tbody>
+    <tr><td>git status</td><td>看工作区/暂存区/领先落后</td><td>一切操作前</td></tr>
+    <tr><td>git fetch</td><td>只刷新书签，不动工作区</td><td>想先看远程有啥</td></tr>
+    <tr><td>git pull</td><td>= fetch + merge（或 rebase）</td><td>开工前同步</td></tr>
+    <tr><td>git push</td><td>本地提交送远程，远程快进</td><td>工作结束</td></tr>
+    <tr><td>git add &lt;文件&gt; / git commit</td><td>工作区→暂存区→仓库</td><td>提交</td></tr>
+    <tr><td>git log --graph --oneline</td><td>可视化历史分叉/合并</td><td>理解两端关系</td></tr>
+    <tr><td>git log HEAD..origin/main</td><td>远程领先我的提交</td><td>看落后内容</td></tr>
+    <tr><td>git log origin/main..HEAD</td><td>我领先远程的提交</td><td>看待推送内容</td></tr>
+    <tr><td>git stash</td><td>暂存工作区改动（临时调试用）</td><td>切走前藏起来</td></tr>
+    <tr><td>git restore --staged &lt;文件&gt;</td><td>撤销 add（退回工作区）</td><td>反悔暂存</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">⚠️ 纪律与陷阱</div>
+  <ol style="margin:0.3rem 0;">
+    <li><strong>改完即 push，别攒</strong>——攒得越多分叉越大、冲突概率越高。</li>
+    <li><strong>同一份被跟踪文件，同一时刻只允许一台机器改</strong>；Windows 的临时调试改动用 stash 或不提交。</li>
+    <li><strong>生成物永不入库</strong>（.xpr/.bit/.runs 已 gitignore），勿 <code>git add -f</code>。</li>
+    <li><strong>已推送的提交绝不 rebase</strong>。</li>
+    <li><strong>网络</strong>：GitHub 连接时通时断（SSL_ERROR_SYSCALL），pull/push 失败重试即可，失败无损。</li>
+  </ol>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260829_xilinx-part-number.html">Xilinx 器件命名规则</a> · <a href="../plans/session-log.md">会话日志</a></p>
+  <p><strong>详细约定：</strong> 见 <a href="../NOTES.md">NOTES.md</a> → 双环境工作流 → git 同步约定</p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>

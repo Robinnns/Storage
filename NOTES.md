@@ -23,6 +23,29 @@
   - 新建工程时，`.xpr` 和约束文件在 Windows 上生成，源码在 macOS 写好后同步过去。
   - commit/push 时机：用户在 macOS 写完源码后可提示提交，但**是否提交由用户决定**（用户说"提交"才操作）。
 
+### git 同步约定（双环境核心纪律）
+- **改完即 push、别攒**：一个逻辑变更完成后立即 commit+push。攒得越多，两端分叉越大、冲突概率越高。
+- **同一份被跟踪文件，同一时刻只允许一台机器改**：RTL 源码统一在 macOS 改；Windows 只跑编译/仿真/下载，临时调试改动用 `git stash` 或直接不提交。
+- **生成物永不入库**：Vivado 的 `workspace/`、`.runs/`、`.xpr`、`.bit` 已被根 `.gitignore` 忽略。git 只同步"设计决策"，不同步"机器状态"。
+- **标准操作序列：**
+  ```bash
+  # 工作结束后（本机提交推送）
+  git add <要共享的文件>      # 精确 add，别 git add .
+  git commit -m "描述改动"
+  git push
+
+  # 另一台机器开工前（先设一次默认 merge，免带参数）
+  git config pull.rebase false
+  git pull
+  ```
+- **pull 报 "divergent branches"**：git 2.27+ 要求明确协调方式——`--no-rebase`=merge（保留合并提交）、`--rebase`=抹平历史变直线、`--ff-only`=只接受快进。设了 `pull.rebase false` 后直接 `git pull`。
+- **冲突处理**：`git pull` 报冲突 → `git status` 找冲突文件 → 打开删掉 `<<<<<<< / ======= / >>>>>>>` 标记手动合并 → `git add` + `git commit`。或 `git checkout --ours/--theirs <文件>` 以某一方为准。
+- **关键机制速记：**
+  - `origin/main` 是**书签**——记录"上次 fetch 时远程的样子"，`git fetch` 才刷新；`git pull` = `fetch` + `merge`。
+  - **三区模型**：工作区 → `git add` → 暂存区 → `git commit` → 仓库历史。
+  - **分叉**（两端各有提交，`[ahead N, behind M]`）无法 fast-forward，必须 merge；merge 自动找共同祖先合并，文件不重叠则零冲突、自动生成合并提交。
+- **网络**：GitHub 连接时通时断（`SSL_ERROR_SYSCALL`），pull/push 失败重试即可，失败无损。
+
 ## 工作区约定
 
 ### `knowledges/` 目录
