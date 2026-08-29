@@ -9,15 +9,15 @@
 //   cnt[25] 每 2^26 个时钟翻转一次 = 50MHz / 67,108,864 ≈ 0.745 Hz
 //   → LED1 每 ~1.34s 亮灭一次, LED2 与之互补
 //
-// 引脚 (来自 A7-LITE 参考手册, 最终以板卡原理图为准):
+// 引脚 (已对照 A7-LITE 厂家官方 xdc 核对):
 //   CLK_50M : J19  (50MHz 有源晶振)
 //   LED1    : M18
 //   LED2    : N18
-//   KEY1    : AA1  (复位键, 按下为低)
+//   RESET   : L18  (板载专用复位, 低有效)
 
 module top (
     input  wire clk_50m,   // 50MHz 系统时钟
-    input  wire rst_n,     // 复位按键 (低有效)
+    input  wire rst_n,     // 板载复位 RESET (L18, 低有效)
     output wire led1,      // 用户 LED1
     output wire led2       // 用户 LED2
 );
