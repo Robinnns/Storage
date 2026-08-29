@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xilinx 器件命名规则 — XC7A35T 拆解</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .part-explode {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 1.4rem 0;
+  }
+  .pseg {
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.8rem;
+    text-align: center;
+    background: var(--surface);
+    flex: 1 1 auto;
+    min-width: 74px;
+  }
+  .pseg.hl { border-color: var(--accent); background: var(--accent-dim); }
+  .pseg .seg {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.05em;
+    color: var(--accent);
+  }
+  .pseg .seg-note {
+    display: block;
+    font-size: 0.72em;
+    color: var(--sidenote);
+    margin-top: 0.3em;
+    line-height: 1.35;
+  }
+
+  .summary-table td:first-child { font-weight: 700; white-space: nowrap; }
+  .family-table td:nth-child(2) { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>Xilinx 器件命名规则 — XC7A35T-2FGG484 拆解</h1>
+<p style="color:var(--sidenote);">260829 · <span class="tag">Xilinx</span><span class="tag">FPGA</span><span class="tag">器件型号</span><span class="tag">Artix-7</span><span class="tag">封装</span></p>
+
+<div class="principle-callout">
+  <h3>🔑 一句话核心</h3>
+  <p><strong>Xilinx 器件型号 = 从左到右逐级收敛的地址：</strong>前缀 → 系列 → 家族 → 规模 → 封装 → 速度 → 温度。读到「封装」这一级时，整个器件已经唯一确定了。</p>
+</div>
+
+<h2>逐段拆解</h2>
+
+<div class="part-explode">
+  <div class="pseg"><span class="seg">XC</span><span class="seg-note">前缀<br>Xilinx Commercial</span></div>
+  <div class="pseg"><span class="seg">7</span><span class="seg-note">系列<br>28nm 工艺</span></div>
+  <div class="pseg"><span class="seg">A</span><span class="seg-note">家族<br>Artix</span></div>
+  <div class="pseg hl"><span class="seg">35T</span><span class="seg-note">规模<br>≈3.3万逻辑单元</span></div>
+  <div class="pseg"><span class="seg">FGG484</span><span class="seg-note">封装<br>倒装 BGA 无铅</span></div>
+  <div class="pseg"><span class="seg">-2</span><span class="seg-note">速度等级<br>中档</span></div>
+  <div class="pseg"><span class="seg">(C)</span><span class="seg-note">温度<br>商用 0~85℃</span></div>
+</div>
+
+<h2>字段详解</h2>
+
+<table class="summary-table">
+  <thead><tr><th>字段</th><th>含义</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>XC</td><td>Xilinx Commercial 前缀</td><td>XC=商用；XA=汽车级；XD=防御级</td></tr>
+    <tr><td>7</td><td>系列（工艺节点）</td><td>7 系列 = 28nm。同系列共享工艺与架构</td></tr>
+    <tr><td>A</td><td>家族定位</td><td>A=Artix（低成本低功耗）· K=Kintex（中端平衡）· V=Virtex（高端最大）· Z=Zynq（带 ARM 的 SoC）</td></tr>
+    <tr><td>35T</td><td>规模代号</td><td>"35" 取整自 System Logic Cells ≈ 3.3 万；T 只是型号后缀。资源实测值见下</td></tr>
+    <tr><td>FGG484</td><td>封装</td><td>F=Flip-chip 倒装 · GG=无铅(RoHS) + 0.8mm 球间距 · 484=焊球数。板卡焊哪个封装就用哪个</td></tr>
+    <tr><td>-2</td><td>速度等级</td><td>-1 慢 → -2 中 → -3 快。影响最高可跑 Fmax，也影响价格</td></tr>
+    <tr><td>C</td><td>温度等级</td><td>C=商用 0~85℃ · I=工业 -40~100℃。丝印上常见</td></tr>
+  </tbody>
+</table>
+
+<h3>35T 的资源实测值（DS181 数据手册）</h3>
+<table class="summary-table">
+  <thead><tr><th>资源</th><th>数量</th><th>资源</th><th>数量</th></tr></thead>
+  <tbody>
+    <tr><td>逻辑单元</td><td>33,280</td><td>DSP48E1</td><td>90</td></tr>
+    <tr><td>Slice</td><td>5,200</td><td>PCIe (Gen2 ×1)</td><td>1</td></tr>
+    <tr><td>CLB 触发器</td><td>41,600</td><td>XADC (12-bit)</td><td>1</td></tr>
+    <tr><td>Block RAM</td><td>50 × 36Kb = 1,800 Kb</td><td>最大用户 I/O</td><td>250</td></tr>
+  </tbody>
+</table>
+
+<h3>7 系列家族定位对比</h3>
+<table class="summary-table family-table">
+  <thead><tr><th>家族</th><th>代号</th><th>定位</th><th>典型应用</th></tr></thead>
+  <tbody>
+    <tr><td>Artix-7</td><td>A</td><td>低成本 / 低功耗 / I/O 密集</td><td>A7-LITE 入门板、工业 IO</td></tr>
+    <tr><td>Kintex-7</td><td>K</td><td>中端 / 性价比平衡</td><td>信号处理、中速收发器</td></tr>
+    <tr><td>Virtex-7</td><td>V</td><td>高端 / 最大规模最高性能</td><td>100G 收发器、数据中心</td></tr>
+    <tr><td>Zynq-7000</td><td>Z</td><td>SoC（ARM Cortex-A9 + FPGA）</td><td>嵌入式软硬协同</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">🧭 怎么确定板卡用的 part？</div>
+  <ol style="margin:0.3rem 0;">
+    <li><strong>看芯片丝印（最权威）：</strong>FPGA 芯片正面印的一行字就是完整型号，如 <code>XC7A35T-2FGG484C</code>。</li>
+    <li><strong>查原理图 + BOM：</strong>原理图里 FPGA 位号（通常 U1），对照 BOM 表的完整 part number。</li>
+    <li><strong>Vivado 里核对：</strong>新建工程 → 器件下拉搜 <code>xc7a35t</code>，对照丝印挑 FGG484 封装 + -2 速度。</li>
+  </ol>
+  <p style="margin:0.5rem 0 0;">⚠️ 注意格式转换：丝印 <code>XC7A35T-2FGG484</code> → Vivado / TCL 里写成 <code>xc7a35tfgg484-2</code>（全小写、拼接、无空格）。</p>
+</div>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_FPGA-architecture.html">FPGA 内部资源与结构详解</a> · <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM</a></p>
+  <p><strong>实践入口：</strong> `projects/00_led_blink/eda/vivado/scripts/create_project.tcl` 里的 <code>set part xc7a35tfgg484-2</code></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>
