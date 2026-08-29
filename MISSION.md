@@ -1,24 +1,24 @@
-# Mission: Storage Devices & Memory Chips
+# 使命：存储器件与存储芯片
 
-## Why
-I'm a newly hired hardware engineer tasked with system integration of storage devices — getting NAND Flash, DRAM, and related chips working reliably inside larger systems (SSDs, embedded storage, memory subsystems on PCBs). I need to quickly build the foundational mental models so I can read datasheets, understand interface specifications, and reason about system-level trade-offs without getting lost.
+## 为什么
+我是一名刚入职的硬件工程师，负责存储器件的系统集成——让 NAND Flash、DRAM 及相关芯片在更大的系统（SSD、嵌入式存储、PCB 上的存储子系统）中稳定可靠地工作。我需要尽快建立基础心智模型，以便能读懂数据手册、理解接口规范、论证系统级的权衡取舍而不迷失方向。
 
-## Success looks like
-- Reading a NAND Flash or DDR datasheet and understanding the pinout, timing diagrams, and command sequences
-- Explaining the fundamental operation of SRAM, DRAM, NAND Flash, and NOR Flash to a colleague from first principles
-- Comparing memory technologies across speed, density, cost, power, and volatility to make or validate system-level selections
-- Understanding what a memory controller does and how it talks to memory chips over standard interfaces (DDR, ONFI, eMMC/UFS)
-- Debugging integration issues by reasoning about signal integrity, timing, and protocol-level behavior
+## 成功的样子
+- 阅读 NAND Flash 或 DDR 数据手册，理解引脚定义、时序图和命令序列
+- 从第一性原理向同事解释 SRAM、DRAM、NAND Flash、NOR Flash 的基本工作原理
+- 对比各存储技术的速度、密度、成本、功耗和易失性，做出或验证系统级选型
+- 理解内存控制器做什么，以及它如何通过标准接口（DDR、ONFI、eMMC/UFS）与存储芯片通信
+- 通过信号完整性、时序和协议层面的推理来排查集成问题
 
-## Constraints
-- EE/CE background with a digital/logic focus; strong on computer architecture, weaker on analog and device physics
-- Learning on the job — lessons should be consumable in 15-20 minute sessions
-- Prefers structured, buildable knowledge over isolated facts
-- Ongoing reference — this workspace grows with the role
+## 约束
+- EE/CE 背景，偏数字/逻辑方向；计算机体系结构扎实，模拟电路和器件物理较弱
+- 边工作边学——课程应能在 15–20 分钟内消化
+- 偏好结构化、可积累的知识，而非零散事实
+- 持续参考——这个工作区会随职业发展不断增长
 
-## Out of scope
-- Detailed transistor-level device physics (only what's needed to understand cell operation)
-- DRAM/CAM design at the circuit-schematic level
-- Fab process engineering
-- Storage networking (SAN, NVMe-oF) — for now
-- Enterprise storage architecture above the device level
+## 超出范围
+- 详细的晶体管级器件物理（只需理解单元工作所需的程度）
+- DRAM/CAM 的电路原理图级设计
+- 晶圆制造工艺工程
+- 存储网络（SAN、NVMe-oF）——暂不涉及
+- 设备层面之上的企业级存储架构
