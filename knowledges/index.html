@@ -75,6 +75,14 @@ const entries = [
   //   related: { lesson: '0001', ref: 'memory-tech' }
   // },
   {
+    date: '260830',
+    file: '260830_fpga-config-boot.html',
+    topic: 'FPGA 配置机制 — bit 烧到哪、易失性、上电加载',
+    summary: 'FPGA 无内置非易失存储：bit 默认烧进 SRAM 配置存储（易失、断电丢、上电变空白）。JTAG 模式（调试/易失）vs QSPI 启动（固化/非易失）。A7-LITE 实例：点灯是 JTAG→SRAM，固化需烧 IS25L128F 并切 QSPI 启动。衔接 SRAM vs NOR Flash 易失性。',
+    tags: ['FPGA', '配置', 'SRAM', 'QSPI', '易失性', '启动模式'],
+    related: {}
+  },
+  {
     date: '260829',
     file: '260829_git-dual-env-workflow.html',
     topic: 'Git 双环境并行开发 — 机制与常用流程',

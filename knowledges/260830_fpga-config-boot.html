@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPGA 配置机制 — bit 烧到哪、易失性、上电加载</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  .breadcrumb { font-size: 0.85em; color: var(--sidenote); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--sidenote); }
+
+  .summary-table td:first-child { font-weight: 700; white-space: nowrap; }
+  .flow-chain {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+    margin: 1.2rem 0;
+    font-size: 0.9em;
+  }
+  .flow-step {
+    padding: 0.4rem 0.7rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+  }
+  .flow-step.hl { border-color: var(--accent); background: var(--accent-dim); }
+  .flow-arrow { color: var(--sidenote); }
+</style>
+</head>
+<body>
+
+<div class="breadcrumb">
+  <a href="index.html">← 返回知识点总表</a>
+</div>
+
+<h1>FPGA 配置机制 — bit 烧到哪、易失性、上电加载</h1>
+<p style="color:var(--sidenote);">260830 · <span class="tag">FPGA</span><span class="tag">配置</span><span class="tag">SRAM</span><span class="tag">QSPI</span><span class="tag">易失性</span><span class="tag">启动模式</span></p>
+
+<div class="principle-callout">
+  <h3>🔑 一句话核心</h3>
+  <p><strong>FPGA 没有内置非易失存储。</strong> bit 默认烧进它内部的 <strong>SRAM 配置存储</strong>——易失、断电即丢、上电变空白裸片。要"上电自动跑"，得把配置存到外部非易失的 <strong>QSPI Flash</strong>，让 FPGA 启动时自己加载。</p>
+</div>
+
+<h2>三连答</h2>
+<table class="summary-table">
+  <thead><tr><th>问题</th><th>答案</th></tr></thead>
+  <tbody>
+    <tr><td>烧到哪？</td><td>FPGA 内部 <strong>SRAM 配置存储</strong>（Configuration SRAM）</td></tr>
+    <tr><td>易失吗？</td><td><strong>易失</strong>——SRAM 结构，断电清零</td></tr>
+    <tr><td>重新上电还在吗？</td><td><strong>不在</strong>。每次上电 FPGA 都是空白，必须重新配置</td></tr>
+  </tbody>
+</table>
+
+<h2>机制：配置 SRAM 决定一切</h2>
+<p>FPGA 的"程序"（bitstream）不是代码，而是写进一大片 <strong>SRAM 配置单元</strong>，这些单元直接决定：</p>
+<ul>
+  <li>每个 <strong>LUT</strong> 的真值表（SRAM 存的内容）</li>
+  <li>每条 <strong>路由开关</strong>（互连网络）的导通</li>
+  <li>每个 <strong>IOB</strong> 的方向/标准</li>
+</ul>
+<p>上电后 FPGA 按启动流程把配置从来源灌进这片 SRAM，完成后 <strong>DONE</strong> 引脚拉高，进入用户模式开始跑。</p>
+
+<div class="flow-chain">
+  <span class="flow-step">上电（配置 SRAM 清零）</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">按 M[2:0] 模式引脚选来源</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step hl">从来源灌入 bitstream</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">DONE=1</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">用户模式运行</span>
+</div>
+
+<h2>两种配置模式对比</h2>
+<table class="summary-table">
+  <thead><tr><th>模式</th><th>配置来源</th><th>易失性</th><th>用途</th></tr></thead>
+  <tbody>
+    <tr><td>JTAG 模式</td><td>Vivado 经 JTAG 口直接灌进 SRAM</td><td>易失</td><td>调试阶段（反复试，随便折腾）</td></tr>
+    <tr><td>QSPI 启动</td><td>FPGA 上电自己从板载 QSPI Flash 读</td><td><strong>非易失</strong></td><td>最终固化（上电自动运行）</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">🎯 A7-LITE 实例（阶段 0 亲历）</div>
+  <ol style="margin:0.3rem 0;">
+    <li>点灯 / UART 用的都是 <strong>JTAG → SRAM</strong>（调试模式）——断电就没了，下次上电得重新 Program。</li>
+    <li>板载 <strong>QSPI Flash = IS25L128F</strong>（128Mbit=16MB，NOR Flash，非易失）——阶段 5 的主角。</li>
+    <li>要"上电自动运行"：Vivado → Add Configuration Memory Device → 选 IS25L128F，把 bit 转 <code>.bin</code>/<code>.mcs</code> 烧进去，boot 模式切 QSPI。</li>
+  </ol>
+</div>
+
+<h2>与存储理论的衔接（易失 vs 非易失）</h2>
+<table class="summary-table">
+  <thead><tr><th>存储</th><th>类型</th><th>特性</th></tr></thead>
+  <tbody>
+    <tr><td>FPGA 配置存储</td><td>SRAM</td><td>易失，供电即保持、断电丢失（无需刷新）</td></tr>
+    <tr><td>QSPI Flash</td><td>NOR Flash</td><td>非易失，断电保持（可反复擦写）</td></tr>
+  </tbody>
+</table>
+<p>类比：SRAM 像"运行内存"，QSPI 像"硬盘"——程序放硬盘，跑时加载进内存。这也是为什么 JTAG 调试可以随便烧、不怕固化——每次都是临时 SRAM；而到 QSPI 阶段要小心"固化"动作（写错可能盖掉出厂固件，但 QSPI 可擦写，不算致命）。</p>
+
+<div class="lesson-footer">
+  <p><strong>关联笔记：</strong> <a href="260731_SRAM-register-BRAM.html">SRAM vs 寄存器 vs BRAM</a> · <a href="260731_FPGA-architecture.html">FPGA 内部资源与结构详解</a> · <a href="260829_xilinx-part-number.html">Xilinx 器件命名规则</a></p>
+  <p><a href="index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/theme.js"></script>
+</body>
+</html>
