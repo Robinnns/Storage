@@ -34,6 +34,12 @@
 - [AnandTech SSD/内存报道](https://www.anandtech.com/tag/memory)
   深入评测，解释 SSD 和内存技术选择背后的"为什么"。用于：看理论如何转化为真实产品。
 
+- [Wikipedia：Floating-gate MOSFET](https://en.wikipedia.org/wiki/Floating-gate_MOSFET)
+  浮栅晶体管原理的权威入门——F-N 隧穿、热载流子注入、Vt 与浮栅电荷的关系。Lesson 0003 的主要来源。
+
+- [Wikipedia：Flash memory](https://en.wikipedia.org/wiki/Flash_memory)
+  NAND/NOR 架构综述——串联 vs 并联、密度、页/块访问粒度、磨损与 ECC。Lesson 0003 的 NAND/NOR 对比来源。
+
 ## 智慧（Wisdom / 社区）
 
 - [r/chipdesign](https://reddit.com/r/chipdesign)

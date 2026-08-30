@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 0003 — Flash 存储单元：靠"困住电荷"存储</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script>(function(){var t=localStorage.getItem('storage-learn-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+  /* SVG 配色 */
+  .f-sub  { fill: #dbe2ea; stroke: #8fa0b4; stroke-width: 1.2; }
+  .f-np   { fill: #c2ced9; stroke: #7d8fa5; stroke-width: 1; }
+  .f-ox   { fill: #fdf3d0; stroke: #d8b45a; stroke-width: 1; }
+  .f-cg   { fill: #b7d2ea; stroke: var(--accent); stroke-width: 1.2; }
+  .f-fg   { fill: var(--accent-dim); stroke: var(--accent); stroke-width: 1.5; }
+  .f-ipd  { fill: #e3e9f0; stroke: #b8c4d4; stroke-width: 1; }
+  .f-elec { fill: var(--accent); }
+  .f-lbl  { fill: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; }
+  .f-lbl-s{ fill: var(--sidenote); font-family: 'Inter', sans-serif; font-size: 9px; }
+  .f-lbl-a{ fill: var(--accent); font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; }
+
+  [data-theme="dark"] .f-sub  { fill: #232c3a; stroke: #5a6b80; }
+  [data-theme="dark"] .f-np   { fill: #2a3544; stroke: #56677c; }
+  [data-theme="dark"] .f-ox   { fill: #3a3320; stroke: #8a742e; }
+  [data-theme="dark"] .f-cg   { fill: #24405c; stroke: #4da8e8; }
+  [data-theme="dark"] .f-ipd  { fill: #2a3440; stroke: #45566b; }
+
+  .three-op { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin: 1.2rem 0; }
+  @media (max-width: 640px) { .three-op { grid-template-columns: 1fr; } }
+  .op-card { border: 1.5px solid var(--border); border-radius: 8px; padding: 0.9rem 1rem; background: var(--surface); }
+  .op-card .op-name { font-weight: 700; color: var(--accent); margin-bottom: 0.4rem; }
+  .op-card .op-vt  { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; margin-top: 0.4rem; }
+</style>
+</head>
+<body>
+
+<!-- ============ 头部 ============ -->
+<div style="font-size:0.85em; color:var(--sidenote); margin-bottom:1.5rem;">
+  Lesson 0003 · 存储单元三部曲之三 — <a href="../lessons/0001-memory-hierarchy.html">L0001 层次</a> → <a href="../lessons/0002-dram-cell.html">L0002 DRAM 单元</a> → <strong>L0003 Flash 单元</strong>
+</div>
+
+<h1>Flash 存储单元：靠"困住电荷"存储</h1>
+<p style="color:var(--sidenote);">浮栅晶体管 · 阈值电压 · 三个操作 · NAND vs NOR</p>
+
+<div class="callout">
+  <div class="callout-title">🎯 为什么学这课</div>
+  <p style="margin:0.3rem 0;">你的岗位是 <strong>NAND Flash 系统集成</strong>。这课补齐存储单元三部曲的最后一环：<a href="../lessons/0001-memory-hierarchy.html">SRAM（6T）</a>、<a href="../lessons/0002-dram-cell.html">DRAM（1T1C）</a>、<strong>Flash（浮栅晶体管）</strong>。学完你能从第一性原理解释：为什么 Flash 断电不丢数据？为什么写之前必须擦除？为什么 NAND 能到 ~4F² 而 SRAM 要 ~120F²？<br>
+  <strong>实践衔接：</strong>你阶段 5 要驱动的板载 <code>IS25L128F</code> 就是 NOR Flash——它的数据手册命令（Sector Erase / Page Program）背后就是本课的原理。</p>
+</div>
+
+<h2>核心心智模型：保持电荷 vs 困住电荷</h2>
+<p>前两课的单元存储原理都是<strong>"保持电荷"</strong>——需要电源维持：</p>
+<table class="summary-table">
+  <thead><tr><th>存储</th><th>单元</th><th>电荷状态如何保持</th></tr></thead>
+  <tbody>
+    <tr><td>SRAM</td><td>6T 锁存</td><td>正反馈环路持续供电维持</td></tr>
+    <tr><td>DRAM</td><td>1T1C</td><td>电容存电荷，漏电需<strong>周期性刷新</strong></td></tr>
+    <tr><td><strong>Flash</strong></td><td><strong>浮栅晶体管</strong></td><td>电荷被<strong>困在绝缘层包裹的浮栅里</strong>——无需电源，天然非易失</td></tr>
+  </tbody>
+</table>
+<p><strong>一句话：Flash 的区别不在"有没有电荷"，而在"电荷能不能逃逸"。</strong></p>
+
+<h2>1. 结构：浮栅 = 电荷的监狱</h2>
+<p>Flash 单元是一个特殊的 MOSFET，比标准管多了一层被绝缘层完全包裹的 <strong>浮栅（floating gate）</strong>：</p>
+
+<svg viewBox="0 0 600 265" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">
+  <!-- ── 左：标准 MOSFET（对照）── -->
+  <text x="135" y="30" class="f-lbl" text-anchor="middle" font-weight="700">标准 MOSFET（对照）</text>
+  <!-- 衬底 -->
+  <rect x="20" y="205" width="230" height="45" rx="4" class="f-sub"/>
+  <text x="135" y="233" class="f-lbl-s" text-anchor="middle">P 衬底</text>
+  <!-- N+ 源漏 -->
+  <rect x="35" y="195" width="42" height="14" rx="2" class="f-np"/>
+  <text x="56" y="181" class="f-lbl" text-anchor="middle">S</text>
+  <rect x="193" y="195" width="42" height="14" rx="2" class="f-np"/>
+  <text x="214" y="181" class="f-lbl" text-anchor="middle">D</text>
+  <!-- 栅氧化层 -->
+  <rect x="35" y="178" width="200" height="11" class="f-ox"/>
+  <text x="135" y="160" class="f-lbl-s" text-anchor="middle">栅氧化层</text>
+  <!-- 控制栅 -->
+  <rect x="35" y="130" width="200" height="24" rx="3" class="f-cg"/>
+  <text x="135" y="146" class="f-lbl" text-anchor="middle" font-weight="700">控制栅 CG</text>
+  <!-- 沟道标注 -->
+  <path d="M 90 209 L 180 209" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="135" y="222" class="f-lbl-s" text-anchor="middle">沟道</text>
+  <text x="135" y="262" class="f-lbl-s" text-anchor="middle">栅电压直接控制沟道导通</text>
+
+  <!-- ── 右：浮栅 MOSFET（Flash 单元）── -->
+  <text x="450" y="30" class="f-lbl" text-anchor="middle" font-weight="700">浮栅 MOSFET（Flash 单元）</text>
+  <!-- 衬底 -->
+  <rect x="320" y="215" width="230" height="45" rx="4" class="f-sub"/>
+  <text x="435" y="243" class="f-lbl-s" text-anchor="middle">P 衬底</text>
+  <!-- N+ 源漏 -->
+  <rect x="335" y="205" width="42" height="14" rx="2" class="f-np"/>
+  <text x="356" y="191" class="f-lbl" text-anchor="middle">S</text>
+  <rect x="493" y="205" width="42" height="14" rx="2" class="f-np"/>
+  <text x="514" y="191" class="f-lbl" text-anchor="middle">D</text>
+  <!-- 隧穿氧化层 (很薄) -->
+  <rect x="335" y="196" width="200" height="6" class="f-ox"/>
+  <text x="335" y="183" class="f-lbl-s">隧穿氧化层 ~9nm</text>
+  <!-- 浮栅 -->
+  <rect x="335" y="168" width="200" height="22" rx="2" class="f-fg"/>
+  <text x="435" y="183" class="f-lbl-a" text-anchor="middle">浮栅 FG（悬浮）</text>
+  <!-- 浮栅里的电子 -->
+  <circle cx="360" cy="179" r="3" class="f-elec"/><text x="353" y="170" class="f-lbl-s">-</text>
+  <circle cx="380" cy="179" r="3" class="f-elec"/><text x="373" y="170" class="f-lbl-s">-</text>
+  <circle cx="400" cy="179" r="3" class="f-elec"/><text x="393" y="170" class="f-lbl-s">-</text>
+  <!-- IPD -->
+  <rect x="335" y="154" width="200" height="10" class="f-ipd"/>
+  <text x="435" y="143" class="f-lbl-s" text-anchor="middle">层间介质 IPD</text>
+  <!-- 控制栅 -->
+  <rect x="335" y="118" width="200" height="24" rx="3" class="f-cg"/>
+  <text x="435" y="134" class="f-lbl" text-anchor="middle" font-weight="700">控制栅 CG</text>
+  <!-- 电荷标注 -->
+  <text x="290" y="180" class="f-lbl-a" text-anchor="end" font-size="10">电荷困在这里</text>
+  <text x="290" y="193" class="f-lbl-s" text-anchor="end">决定 Vt → 决定 0/1</text>
+</svg>
+
+<h2>2. 一个变量解释一切：阈值电压 V<sub>th</sub></h2>
+<p>浮栅上有多少负电荷，直接决定晶体管的<strong>阈值电压 V<sub>th</sub></strong>（导通需要的栅压）。读数据时施加一个中间电压，看电流通不通：</p>
+<table class="summary-table">
+  <thead><tr><th>状态</th><th>浮栅电荷</th><th>V<sub>th</sub></th><th>读（施加中间栅压）</th><th>逻辑值</th></tr></thead>
+  <tbody>
+    <tr><td><strong>擦除态</strong></td><td>无（少）电子</td><td>低</td><td>导通 → 有电流</td><td><strong>1</strong></td></tr>
+    <tr><td><strong>编程态</strong></td><td>电子被注入</td><td>高</td><td>截止 → 无电流</td><td><strong>0</strong></td></tr>
+  </tbody>
+</table>
+<p>多级单元（MLC/TLC）就是精细控制 <em>多个</em> V<sub>th</sub> 电平，一个单元存 2/3 bit——代价是各电平分布变窄、更易受干扰，需要更强的 ECC。</p>
+
+<h2>3. 三个操作：写 / 擦 / 读</h2>
+<div class="three-op">
+  <div class="op-card">
+    <div class="op-name">⚡ 写 Program</div>
+    <p style="font-size:0.9em;">控制栅加高压（15–20V），源/沟道接地 → <strong>Fowler-Nordheim 隧穿</strong>，电子穿过隧穿氧化层进入浮栅。</p>
+    <div class="op-vt">V<sub>th</sub> 升高 → 0</div>
+  </div>
+  <div class="op-card">
+    <div class="op-name">🧽 擦 Erase</div>
+    <p style="font-size:0.9em;">P 阱加高压 / 控制栅接地或负压 → 电场反向，电子被拉出浮栅。<strong>整块一起擦</strong>（块内所有字线）→ 全回 1。</p>
+    <div class="op-vt">V<sub>th</sub> 降低 → 1</div>
+  </div>
+  <div class="op-card">
+    <div class="op-name">👁 读 Read</div>
+    <p style="font-size:0.9em;">控制栅加中间电压（介于两种 V<sub>th</sub> 之间），灵敏放大器检测有无电流。未选字线加 <code>Vread≈4.5V</code> 当"直通管"。</p>
+    <div class="op-vt">检测 V<sub>th</sub> → 0/1</div>
+  </div>
+</div>
+<p><strong>为什么"读快写慢"：</strong>读只测电压（ns 级）；写/擦要让电子穿过绝缘层（物理隧穿），需高压 + 时间（写 μs、擦 ms 级）。</p>
+
+<div class="callout">
+  <div class="callout-title">⚠️ 三个反直觉但必须知道的特性</div>
+  <ol style="margin:0.3rem 0;">
+    <li><strong>只能 1→0，不能 0→1。</strong>写入只是"加电荷"，把 1 变 0；要把 0 变回 1，只能靠整块擦除。→ <strong>先擦后写</strong>（这是 SSD/FTL 最核心的约束）。</li>
+    <li><strong>擦除以块为单位。</strong>一块内所有单元一起擦（字线共享），所以没有"改单个 bit"这回事，只能读-改-写整个页/块。</li>
+    <li><strong>磨损有限。</strong>每次擦写都会轻微损伤隧穿氧化层，寿命受限：SLC ~10⁵ 次、MLC ~10⁴、TLC ~10³ 次/单元。→ SSD 需要<strong>磨损均衡（wear leveling）</strong>。</li>
+  </ol>
+</div>
+
+<h2>4. NAND vs NOR：结构决定命运</h2>
+<p>同一颗浮栅晶体管，<strong>连接方式</strong>不同就长出两种完全不同的产品：</p>
+<table class="summary-table">
+  <thead><tr><th></th><th>NAND</th><th>NOR</th></tr></thead>
+  <tbody>
+    <tr><td>单元连接</td><td><strong>串联成串</strong>（像 NAND 门）</td><td><strong>并联</strong>（像 NOR 门）</td></tr>
+    <tr><td>密度</td><td><strong>高</strong>（~4F²，无需金属接触，可到 100×）</td><td>低（~10F²，每单元独立接触）</td></tr>
+    <tr><td>访问粒度</td><td>页（4–16KB）读/写，块擦除</td><td><strong>字节随机访问</strong></td></tr>
+    <tr><td>读速度</td><td>较慢（需页缓冲）</td><td>快（50–100ns）</td></tr>
+    <tr><td>典型应用</td><td><strong>SSD / U盘 / 存储卡</strong></td><td><strong>固件 / 启动代码（XIP 片上执行）</strong></td></tr>
+    <tr><td>需要</td><td>ECC + FTL（坏块管理、磨损均衡）</td><td>相对少</td></tr>
+  </tbody>
+</table>
+<p><strong>你的板载 <code>IS25L128F</code> 是 NOR</strong>——所以它读快、支持随机读、适合放启动代码；而你的岗位主角 NAND 在 SSD 里以超高密度换顺序访问 + 强 ECC。</p>
+
+<!-- ============ 小测验 ============ -->
+<h2>5. 自测（点选项即时反馈）</h2>
+
+<div class="quiz" data-correct="B">
+  <p class="quiz-question">Q1. Flash 单元的 "1" 和 "0" 由什么决定？</p>
+  <div class="quiz-options">
+    <button class="quiz-option" data-value="A">A. 电容是否充电</button>
+    <button class="quiz-option" data-value="B">B. 浮栅上的电荷量（阈值电压高低）</button>
+    <button class="quiz-option" data-value="C">C. 锁存器的输出状态</button>
+    <button class="quiz-option" data-value="D">D. 磁畴的取向</button>
+  </div>
+  <div class="quiz-feedback" data-good="对——浮栅电荷量决定 Vth，Vth 高低编码 1/0。这正是它非易失的根源。" data-bad="关键在浮栅电荷 → 阈值电压。电容充电是 DRAM 的思路，锁存是 SRAM 的思路，磁畴是硬盘的思路。"></div>
+</div>
+
+<div class="quiz" data-correct="B">
+  <p class="quiz-question">Q2. 为什么 Flash 写入前必须先擦除？</p>
+  <div class="quiz-options">
+    <button class="quiz-option" data-value="A">A. 写入太慢，需要先"预热"</button>
+    <button class="quiz-option" data-value="B">B. 单元只能由 1 变 0，0 变 1 只能整块擦除</button>
+    <button class="quiz-option" data-value="C">C. 擦除能加快后续读取</button>
+    <button class="quiz-option" data-value="D">D. 为了均衡各单元的磨损</button>
+  </div>
+  <div class="quiz-feedback" data-good="对——写只加电荷（1→0），变回 1 只能擦。这就是 FTL 里 read-modify-write 和搬移的原因。" data-bad="想想"写"和"擦"分别能往哪个方向改变电荷——就能推出为什么必须先擦。"></div>
+</div>
+
+<div class="quiz" data-correct="B">
+  <p class="quiz-question">Q3. NAND 密度远高于 NOR 的根本结构原因？</p>
+  <div class="quiz-options">
+    <button class="quiz-option" data-value="A">A. NAND 单元本身更小</button>
+    <button class="quiz-option" data-value="B">B. NAND 单元串联共享位线，无需金属接触</button>
+    <button class="quiz-option" data-value="C">C. NAND 用了更先进的制程节点</button>
+    <button class="quiz-option" data-value="D">D. NAND 不需要擦除</button>
+  </div>
+  <div class="quiz-feedback" data-good="对——串联串 + 无金属接触省下大量面积，密度可差约两个数量级。这也是它只能页/块访问的代价。" data-bad="单元工艺其实同源。关键在连接拓扑：串联共享 vs 并联独立接触。"></div>
+</div>
+
+<!-- ============ 收尾 ============ -->
+<div class="callout">
+  <div class="callout-title">💡 一个打通全局的洞见</div>
+  <p style="margin:0.3rem 0;">把三部曲放一起看：<strong>SRAM 用"电路状态"存、DRAM 用"电容电荷"存、Flash 用"困住的电荷"存。</strong>三者都是"有没有电荷 / 有多少电荷"的二元或多值编码——区别只在<strong>电荷如何进来、如何保持、如何读走</strong>。这个框架能帮你读任何存储数据手册。</p>
+</div>
+
+<p style="color:var(--sidenote);"><strong>推荐延伸阅读：</strong>
+<a href="https://en.wikipedia.org/wiki/Floating-gate_MOSFET">Wikipedia — Floating-gate MOSFET</a>（本课主要来源）·
+<a href="https://en.wikipedia.org/wiki/Flash_memory">Wikipedia — Flash memory</a>（NAND/NOR 对比）·
+更深入见 <a href="../RESOURCES.md">RESOURCES.md</a> 的 <em>Inside NAND Flash Memories</em> 一书。</p>
+
+<div class="lesson-footer">
+  <p><strong>相关课程：</strong> <a href="../lessons/0001-memory-hierarchy.html">L0001 存储器层次结构</a> · <a href="../lessons/0002-dram-cell.html">L0002 DRAM 单元 1T1C</a> · <a href="../reference/memory-technology-comparison.html">存储技术对比速查</a></p>
+  <p><strong>相关知识点：</strong> <a href="../knowledges/260731_F-squared.html">F² 单元面积</a> · <a href="../knowledges/260830_fpga-config-boot.html">FPGA 配置与 QSPI（非易失）</a></p>
+  <p>🤔 有疑问？直接问你的助教——比如：NAND 的 read-modify-write 到底怎么避免破坏相邻页？擦除为什么必须整块？TLC 的三个电平怎么读写？</p>
+  <p><a href="../knowledges/index.html">← 返回知识点总表</a></p>
+</div>
+
+<script src="../assets/quiz.js"></script>
+<script src="../assets/theme.js"></script>
+</body>
+</html>
