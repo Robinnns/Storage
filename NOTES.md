@@ -14,14 +14,42 @@
 - 尽量用具体、数据手册级的例子
 - 每节课都要回答"这对我的工作有什么用？"
 
-## 双环境工作流（重要）
-- **macOS（当前环境）**：承载学习、记录、源码开发。在这里写 RTL/Verilog 源码、记笔记、管理工作区。
-- **Windows 环境**：FPGA 仿真、编译、调试。Vivado 的综合/实现/下载/JTAG 调试、仿真都在 Windows 上做。
-- **同步方式**：两套环境通过 **GitHub 仓库**同步。macOS 上写好的源码 commit+push，Windows 上 pull 下来跑 Vivado。
-- **对工作流的影响：**
-  - macOS 上只做**源码编写与逻辑整理**，不做 Vivado 编译（除非用户要求快速仿真）。
-  - 新建工程时，`.xpr` 和约束文件在 Windows 上生成，源码在 macOS 写好后同步过去。
-  - commit/push 时机：用户在 macOS 写完源码后可提示提交，但**是否提交由用户决定**（用户说"提交"才操作）。
+## 双环境工作流（macOS 开发 + Windows 实现）
+
+### 总体分工
+- **macOS = 开发环境**：编码 + RTL 快速验证。逻辑正确性在这侧闭环（iverilog 秒级仿真）。
+- **Windows = 实现环境**：综合/实现/上板调试。物理验证在这侧完成。
+- **同步方式**：GitHub 仓库。macOS 写好源码 commit+push，Windows pull 下来跑 Vivado。
+
+### 各侧工具链
+
+| 环节 | macOS | Windows |
+|------|-------|---------|
+| 编码 | VS Code + Verilog 插件 | —（只拉代码，不改） |
+| RTL 快速仿真 | iverilog + vvp（`run_sim.sh`） | iverilog + vvp（`run_sim.bat`） |
+| 波形查看 | Surfer | Surfer / GTKWave |
+| 综合 / 实现 / 时序 | — | **Vivado 2021.1**（xsim 综合后/时序仿真） |
+| 上板 / 片内调试 | — | Vivado Hardware Manager + **ILA** |
+| 串口调试 | `screen` / `minicom` | PuTTY / SSCOM（115200 8-N-1） |
+| 版本控制 | git CLI | git CLI |
+
+### 每轮迭代流程
+
+```
+ macOS: 写/改 RTL → bash eda/iverilog/scripts/run_sim.sh → Surfer 看波形
+   │            ↑ (逻辑错误 → 回改)
+   │        逻辑正确 → git commit + push
+   ▼
+ Windows: git pull → source eda/vivado/scripts/create_project.tcl
+        → 综合 + 实现 + Generate Bitstream → 上板下载
+        → ILA / 串口验证 → 有问题回 macOS 改 → 循环
+```
+
+### 关键原则
+- **源码唯一修改点在 macOS**；Windows 只跑流程，临时调试改动用 `git stash` 或直接不提交。
+- **仿真分工**：日常 RTL 功能验证用 iverilog（秒级）；综合后/时序/Xilinx 原语仿真用 Vivado xsim；上板片内调试用 ILA。
+- **生成物永不入库**：`eda/*/workspace/`、`.runs/`、`.xpr`、`.bit` 已在根 `.gitignore` 忽略。
+- **commit/push 时机**：用户在 macOS 写完源码后可提示提交，但**是否提交由用户决定**（用户说"提交"才操作）。
 
 ### git 同步约定（双环境核心纪律）
 - **改完即 push、别攒**：一个逻辑变更完成后立即 commit+push。攒得越多，两端分叉越大、冲突概率越高。
@@ -77,7 +105,7 @@
   │   │   ├── scripts/ TCL 自动化脚本       ← create_project.tcl 等, git 提交
   │   │   └── workspace/ Vivado 工程实体    ← Windows 生成, gitignore
   │   └── iverilog/
-  │       ├── scripts/ run_sim.bat         ← 轻量仿真, git 提交
+  │       ├── scripts/ run_sim.bat / .sh   ← 轻量仿真, git 提交
   │       └── workspace/ 仿真产物           ← gitignore
   └── doc/             工程笔记/截图
   ```
