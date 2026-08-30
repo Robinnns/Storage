@@ -19,6 +19,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports led2]
 set_property PACKAGE_PIN L18  [get_ports rst_n]
 set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
 
+# ---- UART 发送 (FPGA → CH340 → USB 串口) ----
+set_property PACKAGE_PIN V2  [get_ports uart_tx]
+set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
+
 # ---- 时钟约束 (50MHz → 周期 20ns) ----
 create_clock -period 20.000 -name sys_clk [get_ports clk_50m]
 

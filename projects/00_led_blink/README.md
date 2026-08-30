@@ -49,6 +49,19 @@ vivado -mode batch -source scripts/create_project.tcl
 3. 连接板卡 → **Hardware Manager → Open Target → Auto Connect**
 4. 下载：`source scripts/program.tcl`
 
+## 串口验证 "Hello World"（阶段 0 验收）
+
+下载完成后，板载 CH340 会循环发送 `Hello World!`（115200, 8-N-1）：
+
+1. 用 USB 线连接板卡 **UART 口**（CH340，不是 JTAG 口）
+2. Windows 设备管理器 → 端口，记下 CH340 的 COM 号
+3. 打开串口工具（PuTTY / Tera Term / SSCOM 均可）：
+   - 波特率 **115200** · 数据位 8 · 停止位 1 · 无校验（8-N-1）
+4. 打开串口 → 应循环收到 `Hello World!`
+
+> 若乱码：检查波特率是否 115200；若没收到：确认连的是 UART 口、串口工具选了正确 COM 口。
+> macOS 上可用 `screen /dev/tty.usbserial-xxx 115200` 或 `minicom` 替代。
+
 ## 手动建工程步骤（脚本异常时的兜底）
 
 1. Vivado 2021.1 → Create Project，工程名 `00_led_blink`，位置选 `eda/vivado/workspace/`

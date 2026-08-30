@@ -33,8 +33,8 @@ puts "==> 器件: $part"
 # 1) 创建工程 (实体目录: eda/vivado/workspace/)
 create_project $proj_name [file join $script_dir .. workspace] -part $part
 
-# 2) 添加 RTL 源码
-add_files -norecurse [file join $root_dir rtl top.v]
+# 2) 添加 RTL 源码 (rtl/ 下所有 .v, 新增模块自动纳入)
+add_files -norecurse [file glob [file join $root_dir rtl *.v]]
 
 # 3) 添加板级约束 (fpga/a7_lite/)
 add_files -fileset constrs_1 -norecurse [file join $root_dir fpga a7_lite a7_lite.xdc]

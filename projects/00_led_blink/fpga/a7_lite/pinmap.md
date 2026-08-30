@@ -44,6 +44,6 @@
 |------|------|------|---------|
 | DDR3 SDRAM | MT41K256M16 | 256M×16 = 512MB · 1066Mbps | 阶段 6 (MIG) |
 | QSPI Flash | IS25L128F | 128Mbit = 16MB | 阶段 5 |
-| EEPROM | 型号丝印待确认（I2C 引脚已确认 J22/H22） | 字节寻址 | 阶段 4 |
+| EEPROM (I2C) | BL24C128A（上海贝岭, 兼容 AT24C128） | 128Kbit=16KB · 64B 页写 · 引脚 J22/H22 | 阶段 4 |
 | Micro SD 卡槽 | — | SD/SPI 模式 | 阶段 7 |
 | USB-UART | CH340 | 串口 | 阶段 0 |

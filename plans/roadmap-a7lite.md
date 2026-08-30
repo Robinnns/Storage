@@ -12,21 +12,21 @@
 |---------|------|------|-----------|-----------|
 | DDR3 SDRAM | MT41K256M16 | 256M×16 = 512MB · 1066Mbps | DRAM 1T1C、DDR 命令时序、Row Buffer | `lessons/0002-dram-cell.html` |
 | QSPI Flash | IS25L128F | 128Mbit = 16MB | NOR Flash、页/扇区/擦除 | `knowledges/260801_DRAM-word-page-burst.html` |
-| EEPROM | 待确认（I2C，AT24C 系列？） | 字节寻址 | 存储接口、I2C | — |
+| EEPROM | BL24C128A（上海贝岭，兼容 AT24C128） | 128Kbit=16KB · 64B 页写 · I2C | 存储接口、I2C | — |
 | Micro SD | 卡槽 | SD/SPI 模式 | 块寻址、存储系统 | — |
 | FPGA BRAM | 50 × 36Kb = 1.8Mb | SRAM 硬核 | SRAM 阵列结构 | `knowledges/260731_SRAM-array-structure.html` |
 | 分布式 RAM | 400Kb | LUT 实现 | SRAM vs BRAM | `knowledges/260731_FPGA-architecture.html` |
 
 ---
 
-## 阶段 0 · 环境搭建 ✅（除 UART）
+## 阶段 0 · 环境搭建 ✅
 
 - [x] 安装 Vivado 2021.1（板卡官方推荐版本）
 - [x] 下载板卡约束文件（MicroPhase/fpga-docs，`a7_lite_official.xdc`）
 - [x] 创建第一个工程，点亮板载 LED（D6/D5）
-- [ ] 跑通 USB-UART（CH340），串口打印 "Hello"
+- [x] 跑通 USB-UART（CH340），串口打印 "Hello"（仿真验证通过，待上板确认）
 
-**验收：** LED 闪烁 ✅ · 串口输出（待做）
+**验收：** LED 闪烁 ✅ · 串口输出 ✅（iverilog 仿真）
 **产出：** `projects/00_led_blink/`
 
 ---
@@ -70,7 +70,7 @@
 
 ## 阶段 4 · I2C EEPROM ⏳ 1 周
 
-- [ ] 确认板载 EEPROM 型号（看丝印或原理图 PDF）
+- [x] 确认板载 EEPROM 型号（BL24C128A，丝印确认）
 - [ ] 手写 I2C Master（含 SCL 生成、START/STOP、ACK 检测）
 - [ ] 读写 EEPROM：写一个字节 → 回读 → UART 打印
 - [ ] （进阶）实现页写入（Page Write）
@@ -168,7 +168,7 @@ macOS（当前）                    Windows（FPGA）
 
 | 阶段 | 开始日期 | 完成日期 | 备注 |
 |------|---------|---------|------|
-| 0 环境 | 2026-08-29 | 2026-08-30 | LED 点灯通过；UART 未做 |
+| 0 环境 | 2026-08-29 | 2026-08-30 | 点灯+UART 仿真通过；上板确认后完全完成 |
 | 1 组合逻辑 | — | — | |
 | 2 时序逻辑 | — | — | |
 | 3 BRAM | — | — | |
