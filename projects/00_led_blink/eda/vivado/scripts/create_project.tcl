@@ -13,8 +13,10 @@
 #     cd <仓库>\projects\00_led_blink\eda\vivado
 #     source scripts/create_project.tcl
 #
-#   方式 B — 命令行批量模式:
-#     vivado -mode batch -source scripts/create_project.tcl
+#   方式 B — 命令行批量模式 (先在 vivado/ 目录下运行, 避免日志写进仓库根):
+#     cd <仓库>\projects\00_led_blink\eda\vivado
+#     vivado -mode batch -nolog -nojournal -source scripts/create_project.tcl
+#     (-nolog -nojournal 禁用 vivado.log/jou; .Xil/ 仍写当前目录, 已被 .gitignore 忽略)
 #
 # 若 workspace/ 已有旧工程, 先删除该目录再运行.
 # ============================================================
@@ -34,7 +36,7 @@ puts "==> 器件: $part"
 create_project $proj_name [file join $script_dir .. workspace] -part $part
 
 # 2) 添加 RTL 源码 (rtl/ 下所有 .v, 新增模块自动纳入)
-add_files -norecurse [file glob [file join $root_dir rtl *.v]]
+add_files -norecurse [glob [file join $root_dir rtl *.v]]
 
 # 3) 添加板级约束 (fpga/a7_lite/)
 add_files -fileset constrs_1 -norecurse [file join $root_dir fpga a7_lite a7_lite.xdc]
@@ -46,8 +48,7 @@ add_files -fileset sim_1 -norecurse [file join $root_dir tb tb_top.v]
 set_property top top [current_fileset]
 set_property top_lib xil_defaultlib [current_fileset]
 
-# 6) 保存并关闭
-save_project_as $proj_name [file join $script_dir .. workspace] -force
+# 6) 关闭 (add_files/set_property 时 Vivado 已自动保存 .xpr)
 close_project
 
 puts "==> 完成! 工程已创建于 eda/vivado/workspace/"

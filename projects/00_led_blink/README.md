@@ -37,9 +37,12 @@ macOS 写源码 → 提交 git → Windows 一条 TCL 命令重建工程。
 cd <仓库>\projects\00_led_blink\eda\vivado
 source scripts/create_project.tcl
 
-# 方式 B — 命令行批量模式:
-vivado -mode batch -source scripts/create_project.tcl
+# 方式 B — 命令行批量模式 (先在 vivado/ 目录下运行, 避免日志写进仓库根):
+cd <仓库>\projects\00_led_blink\eda\vivado
+vivado -mode batch -nolog -nojournal -source scripts/create_project.tcl
 ```
+
+> 💡 `-nolog -nojournal` 可禁用 vivado.log / vivado.jou；但 `.Xil/` 仍会写在当前目录（已被 .gitignore 忽略）。所以**务必先 cd 到 `eda/vivado/` 再运行**，让这些杂物落在 vivado/ 下而不是仓库根。
 
 脚本自动完成：建工程（器件 `xc7a35tfgg484-2`）→ 引用 `rtl/`、`tb/`、`fpga/a7_lite/` 外部文件 → 设顶层 `top` → 保存到 `workspace/`。
 
