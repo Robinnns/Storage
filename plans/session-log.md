@@ -10,6 +10,12 @@
 - **待办（用户侧）：** Windows 装 Vivado 2021.1 + Git；下载板卡原理图核对引脚；确认 EEPROM 型号
 - **下次：** 用户同步仓库到 Windows → 建 Vivado 工程 → 行为仿真 → 生成 bitstream → 下载验证
 
+## 2026-08-30 | 🏁 阶段 0 全部完成：上板串口确认 "Hello World!"
+- Windows 上板下载成功，串口 115200 循环收到 "Hello World!" ✅
+- 阶段 0 验收全通过：LED 点灯 ✅ + UART 串口 ✅
+- Windows 实测发现 create_project.tcl 的 Tcl 语法错误（file glob→glob）并修复，双环境闭环验证价值体现
+- **下一步：** 进入阶段 1（组合逻辑 → LUT）
+
 ## 2026-08-30 | 阶段 0 收官：UART 串口 "Hello World!"（仿真）
 - 实现 `rtl/uart_tx.v`（参数化波特率，8-N-1 帧状态机）+ top 集成循环发送
 - **修复一拍竞态**：发送控制只判 `!tx_busy` 会在 uart_tx 启动空隙重复触发 → 跳字符；加 `!tx_start` 条件解决（iverilog 仿真发现的）
