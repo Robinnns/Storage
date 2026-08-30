@@ -2,7 +2,8 @@
 
 > **平台：** Microphase A7-LITE · XC7A35T-2FGG484 · Vivado 2021.1
 > **目标：** 把已学的存储理论（SRAM/DRAM/NOR/NAND/DDR）逐一落到真实硬件
-> **节奏：** 假设每周 3–5 小时，全程约 10–12 周
+> **节奏：** 每周 **10 小时** · 已跳过阶段 1/2（基础技能并入阶段 3）· 全程约 **6–8 周**
+> **调整记录：** 2026-08-30 跳过阶段 1/2；每周投入由 3–5h 改为 10h
 
 ---
 
@@ -31,57 +32,42 @@
 
 ---
 
-## 阶段 1 · 组合逻辑 → LUT ⏳ 0.5 周
+## 阶段 1·2 · 组合/时序基础 — 已跳过 ✅（技能并入阶段 3）
 
-- [ ] 用 Verilog 实现 NAND / NOR / XOR / 多路选择器
-- [ ] 查看综合报告（Vivado → Synthesis → Utilization），记录 LUT 用量
-- [ ] 把 2 输入 NAND 改成 6 输入，观察 LUT 用量变化（1 个 LUT6 装得下几个门）
-
-**理论衔接：** 「CMOS 常见逻辑门电路」——FPGA 里没有 CMOS 门，LUT 用 SRAM 存真值表等效实现
-**验收：** 仿真波形正确 + 综合报告能说明 LUT 用量
-**产出：** `projects/01_logic_gates/`
+> **为什么能跳：** 点灯工程已覆盖计数器（时序基础）+ always/reg/assign；LUT/DFF 理论已有笔记。
+> **不白跳：** 三项关键技能下沉到阶段 3 的「前置热身」——① 综合报告解读（LUT 概念）② ILA 使用（时序抓波）③ BRAM 综合报告对比（原本阶段 1 的 Utilization 报告技能）。
 
 ---
 
-## 阶段 2 · 时序逻辑 → DFF ⏳ 0.5 周
+## 阶段 3 · BRAM（含前置热身）⏳ 1–1.5 周 @10h
 
-- [ ] 实现计数器（4-bit / 24-bit），看 FF 用量
-- [ ] 实现寄存器文件（2 读 1 写），看综合成多少个 FF
-- [ ] 用 ILA（集成逻辑分析仪）抓计数器的时序波形
-
-**理论衔接：** 「DFF 结构」「锁存器·触发器·寄存器·缓存」——FPGA 的 always 块综合成 Slice 里的 FF
-**验收：** ILA 波形能观察到寄存器每个时钟沿更新
-**产出：** `projects/02_counter_regfile/`
-
----
-
-## 阶段 3 · BRAM ⏳ 1 周
-
+- [ ] **热身 A（原阶段 1 技能）：** 综合 BRAM 测试工程 → 打开 Synthesis Utilization 报告，看懂 LUT / FF / BRAM 三列，记录用量
+- [ ] **热身 B（原阶段 2 技能）：** 用 ILA 抓 BRAM 读写波形（内部信号直接观察）
 - [ ] 用 `reg [7:0] mem [0:255]` 写 inferred BRAM（读 + 写）
-- [ ] 对比综合报告：inferred BRAM 用了几块 BRAM（36Kb）
+- [ ] 对比综合报告：inferred BRAM 用了几块 36Kb
 - [ ] 用 BRAM IP（XPM 或 Block Memory Generator）建真双口 RAM
 - [ ] 实现一个同步 FIFO（用 BRAM），验证空/满标志
 
 **理论衔接：** 「SRAM 阵列结构」「FPGA 内部资源」——BRAM 就是 FPGA 里的 SRAM 硬核，读写时序和理论一致
-**验收：** 双口 RAM 两个端口独立读写正确 + FIFO 空满逻辑正确
+**验收：** 双口 RAM 两端口独立读写正确 + FIFO 空满正确 + 会用 ILA / 能读综合报告
 **产出：** `projects/03_bram_fifo/`
 
 ---
 
-## 阶段 4 · I2C EEPROM ⏳ 1 周
+## 阶段 4 · I2C EEPROM ⏳ 1–1.5 周 @10h
 
 - [x] 确认板载 EEPROM 型号（BL24C128A，丝印确认）
 - [ ] 手写 I2C Master（含 SCL 生成、START/STOP、ACK 检测）
 - [ ] 读写 EEPROM：写一个字节 → 回读 → UART 打印
-- [ ] （进阶）实现页写入（Page Write）
+- [ ] （进阶）实现页写入（Page Write，64B/页）
 
-**理论衔接：** 第一次操作真实存储芯片——理解字节寻址、设备地址、ACK
+**理论衔接：** 第一次操作真实存储芯片——理解字节寻址、设备地址（1010 A2 A1 A0）、ACK
 **验收：** 断电重启后数据仍在（验证 EEPROM 非易失）
 **产出：** `projects/04_i2c_eeprom/`
 
 ---
 
-## 阶段 5 · QSPI Flash ⏳ 1.5 周
+## 阶段 5 · QSPI Flash ⏳ 1 周 @10h
 
 - [ ] 用 QSPI 控制器读 JEDEC ID（确认是 IS25L128F）
 - [ ] 实现 Sector Erase → Page Program → Read
@@ -94,7 +80,7 @@
 
 ---
 
-## 阶段 6 · DDR3 + MIG ★ 重点 ⏳ 2–3 周
+## 阶段 6 · DDR3 + MIG ★ 重点 ⏳ 1.5–2 周 @10h
 
 - [ ] 用 MIG IP（Memory Interface Generator）生成 DDR3 控制器
   - 参考 A7-LITE 板卡约束 / 官方 MIG 示例，配置 512MB、16-bit、1066Mbps
@@ -106,13 +92,13 @@
   - [ ] REFRESH（刷新命令周期性出现）
 - [ ] 测量并记录：行激活到数据返回的延迟、刷新间隔
 
-**理论衔接：** ★ 这是你系统集成工作的核心——「DRAM 破坏性读取 → tRC」「刷新 → 延迟尖峰」这些理论用示波器/ILA 亲眼看到
+**理论衔接：** ★ 系统集成工作的核心——「DRAM 破坏性读取 → tRC」「刷新 → 延迟尖峰」用示波器/ILA 亲眼看到
 **验收：** 读写 1MB 数据 100% 比对一致 + 抓到的关键波形
 **产出：** `projects/06_ddr3_mig/`
 
 ---
 
-## 阶段 7 · 综合项目 ⏳ 2 周
+## 阶段 7 · 综合项目 ⏳ 1.5 周 @10h
 
 选择其一：
 
@@ -152,10 +138,11 @@ macOS（当前）                    Windows（FPGA）
 |------|------|------|------|
 | Vivado 2021.1 | 综合/实现/下载/调试 | **Windows** | xilinx.com/download |
 | MIG IP | DDR3 内存控制器生成器 | **Windows**（Vivado 内） | Vivado 自带 |
-| ILA IP | 片内逻辑分析仪（抓 DDR3 波形） | **Windows**（Vivado 内） | Vivado 自带 |
+| ILA IP | 片内逻辑分析仪（抓 BRAM/DDR3 波形） | **Windows**（Vivado 内） | Vivado 自带 |
 | GTKWave | 仿真波形查看（配 Icarus） | **Windows** 或 macOS | gtkwave.sourceforge.net |
+| Surfer | 波形查看（iverilog 搭档） | **macOS**（brew） | surfer.rtfd.io |
 | VS Code | 写 RTL 源码（Verilog 插件） | **macOS** | code.visualstudio.com |
-| Icarus Verilog | 轻量仿真（可选，快速验证用） | 两环境均可 | iverilog.icarus.com | |
+| Icarus Verilog | 轻量仿真（秒级快速验证） | 两环境均可 | iverilog.icarus.com |
 
 **推荐教程：**
 - A7-LITE 官方文档：[fpga-docs.microphase.cn](https://fpga-docs.microphase.cn/en/latest/DEV_BOARD/A7-LITE/A7-Lite_Reference_Manual.html)
@@ -169,10 +156,11 @@ macOS（当前）                    Windows（FPGA）
 | 阶段 | 开始日期 | 完成日期 | 备注 |
 |------|---------|---------|------|
 | 0 环境 | 2026-08-29 | 2026-08-30 | ✅ 全通过：点灯 + UART 上板确认 |
-| 1 组合逻辑 | — | — | |
-| 2 时序逻辑 | — | — | |
-| 3 BRAM | — | — | |
-| 4 EEPROM | — | — | |
-| 5 QSPI Flash | — | — | |
-| 6 DDR3 | — | — | |
-| 7 综合项目 | — | — | |
+| 1-2 组合/时序 | — | — | 跳过，技能并入阶段 3 |
+| 3 BRAM | — | — | 预计 1–1.5 周（含 LUT/ILA 热身） |
+| 4 EEPROM | — | — | 预计 1–1.5 周 |
+| 5 QSPI Flash | — | — | 预计 1 周 |
+| 6 DDR3 | — | — | 预计 1.5–2 周 |
+| 7 综合项目 | — | — | 预计 1.5 周 |
+
+**总预计：** 约 6–8 周（每周 10 小时）
